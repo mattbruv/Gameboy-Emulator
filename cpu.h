@@ -13,7 +13,7 @@ typedef struct
 } CPU_Reg;
 
 // Gameboy CPU: 8-bit (Similar to the Z80 processor)
-class GB_CPU
+class CPU
 {
 	// Clock Speed: 4.19MHz 
 	int clock_cycles;
