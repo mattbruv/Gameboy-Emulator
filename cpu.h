@@ -1,14 +1,12 @@
 #pragma once
 
-#include <cstdint>
-
 typedef struct
 {
-	uint16_t value_16;
-	uint8_t value_8;
+	unsigned short value_16;
+	unsigned char value_8;
 
-	uint8_t high;
-	uint8_t low;
+	unsigned char high;
+	unsigned char low;
 
 } CPU_Reg;
 
@@ -31,27 +29,26 @@ class CPU
 	CPU_Reg C;
 	CPU_Reg D;
 	CPU_Reg E;
-	CPU_Reg F;
 	CPU_Reg H;
 	CPU_Reg L;
 
+	/*
+	The flag register consists of the following bits:
+
+	| 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
+	---------------------------------
+	| Z | N | H | C | 0 | 0 | 0 | 0 |
+
+	Zero Flag (Z): set when result of math operation is zero or 2 values match using CP instruction
+	Subtract Flag (N): set when subtraction was performed last
+	Half Carry Flag (H): set if a carry odccured from the lower nibble in the last math operation
+	Carry Flag (C): set if a carry occured from the last math operation or if A is smaller when executing CP instruction
+
+	*/
+	CPU_Reg F;
+
 	CPU_Reg SP; // Stack Pointer
 	CPU_Reg PC; // Program Counter
-
-	/*
-		The flag register consists of the following bits:
-
-		| 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
-		---------------------------------
-		| Z | N | H | C | 0 | 0 | 0 | 0 |
-
-		Zero Flag (Z): set when result of math operation is zero or 2 values match using CP instruction
-		Subtract Flag (N): set when subtraction was performed last
-		Half Carry Flag (H): set if a carry odccured from the lower nibble in the last math operation
-		Carry Flag (C): set if a carry occured from the last math operation or if A is smaller when executing CP instruction
-		
-	*/
-	CPU_Reg Flag; // Flag Register
 
 	private:
 		void init();
