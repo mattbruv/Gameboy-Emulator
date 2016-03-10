@@ -32,6 +32,9 @@ class CPU
 		Address address(Byte high, Byte low);
 		int parse_opcode(Opcode code);
 
+		void dec_reg_pair(Byte& high, Byte& low);
+		void inc_reg_pair(Byte& high, Byte& low);
+
 		void LD(Byte& destination, Byte value);
 		void LD(Byte& destination, Address addr);
 		void LD(Address addr, Byte value);

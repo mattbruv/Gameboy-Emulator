@@ -9,9 +9,9 @@ Memory::Memory()
 	}
 }
 
-void Memory::write(int location, unsigned char byte)
+void Memory::write(int location, Byte data)
 {
-	MemoryMap[location] = byte;
+	MemoryMap[location] = data;
 }
 
 unsigned char Memory::read(int location)

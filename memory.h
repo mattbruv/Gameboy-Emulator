@@ -2,11 +2,10 @@
 
 #include "types.h"
 
-class Memory {
-
+class Memory
+{
 	private:
-		unsigned char MemoryMap[0xFFFF];
-	
+		Byte MemoryMap[0xFFFF];
 
 	public:
 
@@ -25,7 +24,6 @@ class Memory {
 
 		Memory::Memory();
 
-		void write(int location, unsigned char byte);
-		unsigned char read(int location);
-
+		void write(int location, Byte data);
+		Byte read(int location);
 };
