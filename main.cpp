@@ -1,4 +1,3 @@
-#include "disassembler.h"
 #include "cpu.h"
 
 int main()
