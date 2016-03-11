@@ -47,11 +47,21 @@ Address CPU::address(Byte high, Byte low)
 	return (high << 8 | low);
 }
 
+Byte CPU::high_reg_pair(Byte_2 reg_pair)
+{
+	return (Byte) (reg_pair >> 8) & 0xFF;
+}
+
+Byte CPU::low_reg_pair(Byte_2 reg_pair)
+{
+	return (Byte) reg_pair;
+}
+
 void CPU::dec_reg_pair(Byte& high, Byte& low)
 {
 	Address addr = address(high, low) - 1;
-	high = (Byte) (addr >> 8) & 0xFF;
-	low = (Byte) addr;
+	high = high_reg_pair(addr);
+	low = low_reg_pair(addr);
 }
 
 void CPU::inc_reg_pair(Byte& high, Byte& low)
@@ -63,15 +73,15 @@ void CPU::inc_reg_pair(Byte& high, Byte& low)
 
 void CPU::debug()
 {
-	parse_opcode(0x3A);
+	parse_opcode(0x31);
 }
 
 int CPU::parse_opcode(Opcode code)
 {
 	int opbytes = 1;
 
-	Byte value = 195;
-	Byte value2 = 200;
+	Byte value = 195; // 11000011 little byte
+	Byte value2 = 200; // 11001000 high byte
 
 	Byte addr1 = 0b00000011;
 	Byte addr2 = 0b00000000;
@@ -182,10 +192,22 @@ int CPU::parse_opcode(Opcode code)
 		// 75
 		case 0xE0: memory.write((0xFF00 + value), reg_A); break;// UNTESTED
 		case 0xF0: LD(reg_A, memory.read(0xFF00 + value)); break; // UNTESTED
+		// 76
+		case 0x01: LD(reg_B, reg_C, value, value2); opbytes = 3; break;
+		case 0x11: LD(reg_D, reg_E, value, value2); opbytes = 3; break;
+		case 0x21: LD(reg_H, reg_L, value, value2); opbytes = 3; break;
+		case 0x31: LD(reg_SP, value, value2); opbytes = 3; break;
+		case 0xF9: LD(reg_SP, reg_H, reg_L); break;
+		// 77
+		case 0xF8: LD(reg_H, reg_L, (reg_SP + value)); opbytes = 2; break; // UNTESTED ... value is a SIGNED byte?
+		// 78
+		case 0x08: LD(address(value2, value), reg_SP); opbytes = 3; break; // UNTESTED
 	}
 
 	return opbytes;
 }
+
+// 8-bit loads
 
 void CPU::LD(Byte& destination, Byte value)
 {
@@ -200,4 +222,36 @@ void CPU::LD(Byte& destination, Address addr)
 void CPU::LD(Address addr, Byte value)
 {
 	memory.write(addr, value);
+}
+
+
+// 16-bit loads
+
+void CPU::LD(Byte_2& reg, Byte lsb, Byte msb)
+{
+	reg = address(msb, lsb);
+}
+
+void CPU::LD(Byte& reg_high, Byte& reg_low, Byte lsb, Byte msb)
+{
+	reg_high = msb;
+	reg_low = lsb;
+}
+
+void CPU::LD(Byte& reg_high, Byte& reg_low, Byte_2 value)
+{
+	reg_high = high_reg_pair(value);
+	reg_low = low_reg_pair(value);
+
+	// Z reset
+	// N reset
+	// H - Set or reset according to operation???
+	// C - Set or reset according to operation???
+}
+
+void CPU::LD(Address destination, Byte_2 value)
+{
+	// These high-low may possibly need to be reversed
+	memory.write(destination++, high_reg_pair(value));
+	memory.write(destination, low_reg_pair(value));
 }
