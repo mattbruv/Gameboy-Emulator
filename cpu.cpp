@@ -20,7 +20,7 @@ void CPU::init()
 	reg_F = 0;
 	reg_H = 0;
 	reg_L = 0;
-	reg_SP = 0;
+	reg_SP = 0xFFFE;
 	reg_PC = 0;
 }
 
@@ -71,9 +71,17 @@ void CPU::inc_reg_pair(Byte& high, Byte& low)
 	low = (Byte) addr;
 }
 
+void CPU::set_flag(int flag, bool value)
+{
+	if (value == true)
+		reg_F |= flag;
+	else
+		reg_F &= ~(flag);
+}
+
 void CPU::debug()
 {
-	parse_opcode(0x31);
+	parse_opcode(0x87);
 }
 
 int CPU::parse_opcode(Opcode code)
@@ -197,11 +205,32 @@ int CPU::parse_opcode(Opcode code)
 		case 0x11: LD(reg_D, reg_E, value, value2); opbytes = 3; break;
 		case 0x21: LD(reg_H, reg_L, value, value2); opbytes = 3; break;
 		case 0x31: LD(reg_SP, value, value2); opbytes = 3; break;
-		case 0xF9: LD(reg_SP, reg_H, reg_L); break;
+		case 0xF9: LD(reg_SP, reg_L, reg_H); break;
 		// 77
 		case 0xF8: LD(reg_H, reg_L, (reg_SP + value)); opbytes = 2; break; // UNTESTED ... value is a SIGNED byte?
 		// 78
 		case 0x08: LD(address(value2, value), reg_SP); opbytes = 3; break; // UNTESTED
+		case 0xF5: PUSH(reg_A, reg_F); break;
+		case 0xC5: PUSH(reg_B, reg_C); break;
+		case 0xD5: PUSH(reg_D, reg_E); break;
+		case 0xE5: PUSH(reg_H, reg_L); break;
+		// 79
+		case 0xF1: POP(reg_A, reg_F); break;
+		case 0xC1: POP(reg_B, reg_C); break;
+		case 0xD1: POP(reg_D, reg_E); break;
+		case 0xE1: POP(reg_H, reg_L); break;
+		// 80
+		case 0x87: ADD(reg_A, reg_A); break;
+		case 0x80: ADD(reg_A, reg_B); break;
+		case 0x81: ADD(reg_A, reg_C); break;
+		case 0x82: ADD(reg_A, reg_D); break;
+		case 0x83: ADD(reg_A, reg_E); break;
+		case 0x84: ADD(reg_A, reg_H); break;
+		case 0x85: ADD(reg_A, reg_L); break;
+		case 0x86: ADD(reg_A, address(reg_H, reg_L)); break; // UNTESTED
+		case 0xC6: ADD(reg_A, value); opbytes = 2;  break; // UNTESTED
+		// 81
+
 	}
 
 	return opbytes;
@@ -244,7 +273,9 @@ void CPU::LD(Byte& reg_high, Byte& reg_low, Byte_2 value)
 	reg_low = low_reg_pair(value);
 
 	// Z reset
+	set_flag(FLAG_ZERO, false);
 	// N reset
+	set_flag(FLAG_SUB, false);
 	// H - Set or reset according to operation???
 	// C - Set or reset according to operation???
 }
@@ -252,6 +283,40 @@ void CPU::LD(Byte& reg_high, Byte& reg_low, Byte_2 value)
 void CPU::LD(Address destination, Byte_2 value)
 {
 	// These high-low may possibly need to be reversed
-	memory.write(destination++, high_reg_pair(value));
-	memory.write(destination, low_reg_pair(value));
+	memory.write(destination++, low_reg_pair(value));
+	memory.write(destination, high_reg_pair(value));
+}
+
+// Stack Operations
+
+void CPU::PUSH(Byte high, Byte low)
+{
+	memory.write(--reg_SP, high);
+	memory.write(--reg_SP, low);
+}
+
+void CPU::POP(Byte& high, Byte& low)
+{
+	low = memory.read(reg_SP++);
+	high = memory.read(reg_SP++);
+}
+
+// ALU Operations
+
+void CPU::ADD(Byte& target, Byte value)
+{
+	target += value;
+
+	if (value == 0)
+		set_flag(FLAG_ZERO, true);
+
+	set_flag(FLAG_SUB, false);
+	// H - Set if carry from bit 3
+	// C - Set if carry from bit 7
+}
+
+void CPU::ADD(Byte& target, Address addr)
+{
+	Byte val = memory.read(addr);
+	ADD(target, val);
 }

@@ -22,6 +22,11 @@ class CPU
 		Byte_2 reg_SP; // Stack Pointer
 		Byte_2 reg_PC; // Program Counter
 
+		const int FLAG_ZERO       = 0b10000000;
+		const int FLAG_SUB        = 0b01000000;
+		const int FLAG_HALF_CARRY = 0b00100000;
+		const int FLAG_CARRY      = 0b00010000;
+
 		Memory memory;
 
 		void init();
@@ -36,6 +41,7 @@ class CPU
 		Byte low_reg_pair(Byte_2 reg_pair);
 		void dec_reg_pair(Byte& high, Byte& low);
 		void inc_reg_pair(Byte& high, Byte& low);
+		void set_flag(int flag, bool value);
 
 		// 8-bit loads
 		void LD(Byte& destination, Byte value);
@@ -46,4 +52,10 @@ class CPU
 		void LD(Byte& reg_high, Byte& reg_low, Byte msb, Byte lsb);
 		void LD(Byte& reg_high, Byte& reg_low, Byte_2 value);
 		void LD(Address destination, Byte_2 value);
+
+		void PUSH(Byte high, Byte low);
+		void POP(Byte& high, Byte& low);
+
+		void ADD(Byte& target, Byte value);
+		void ADD(Byte& target, Address addr);
 };
