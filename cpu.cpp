@@ -47,6 +47,16 @@ Address CPU::address(Byte high, Byte low)
 	return (high << 8 | low);
 }
 
+Byte CPU::high_nibble(Byte target)
+{
+	return ((target >> 4) & 0xF);
+}
+
+Byte CPU::low_nibble(Byte target)
+{
+	return (target & 0xF);
+}
+
 Byte CPU::high_reg_pair(Byte_2 reg_pair)
 {
 	return (Byte) (reg_pair >> 8) & 0xFF;
@@ -81,18 +91,19 @@ void CPU::set_flag(int flag, bool value)
 
 void CPU::debug()
 {
-	parse_opcode(0x87);
+	reg_A = 10;
+	parse_opcode(0x8E);
 }
 
 int CPU::parse_opcode(Opcode code)
 {
 	int opbytes = 1;
 
-	Byte value = 195; // 11000011 little byte
+	Byte value = 1; // 11000011 little byte
 	Byte value2 = 200; // 11001000 high byte
 
-	Byte addr1 = 0b00000011;
-	Byte addr2 = 0b00000000;
+	Byte addr1 = 0b00000000;
+	Byte addr2 = 0b00000101;
 	
 	Byte test = 0b0000001100000000;
 
@@ -230,7 +241,15 @@ int CPU::parse_opcode(Opcode code)
 		case 0x86: ADD(reg_A, address(reg_H, reg_L)); break; // UNTESTED
 		case 0xC6: ADD(reg_A, value); opbytes = 2;  break; // UNTESTED
 		// 81
-
+		case 0x8F: ADDC(reg_A, reg_A); break;
+		case 0x88: ADDC(reg_A, reg_B); break;
+		case 0x89: ADDC(reg_A, reg_C); break;
+		case 0x8A: ADDC(reg_A, reg_D); break;
+		case 0x8B: ADDC(reg_A, reg_E); break;
+		case 0x8C: ADDC(reg_A, reg_H); break;
+		case 0x8D: ADDC(reg_A, reg_L); break;
+		case 0x8E: ADDC(reg_A, address(reg_H, reg_L)); break;
+		case 0xCE: ADDC(reg_A, value); opbytes = 2; break; // UNTESTED
 	}
 
 	return opbytes;
@@ -272,9 +291,7 @@ void CPU::LD(Byte& reg_high, Byte& reg_low, Byte_2 value)
 	reg_high = high_reg_pair(value);
 	reg_low = low_reg_pair(value);
 
-	// Z reset
 	set_flag(FLAG_ZERO, false);
-	// N reset
 	set_flag(FLAG_SUB, false);
 	// H - Set or reset according to operation???
 	// C - Set or reset according to operation???
@@ -305,18 +322,31 @@ void CPU::POP(Byte& high, Byte& low)
 
 void CPU::ADD(Byte& target, Byte value)
 {
-	target += value;
+	int result = target + value;
 
-	if (value == 0)
-		set_flag(FLAG_ZERO, true);
+	set_flag(FLAG_ZERO, (result == 0)); // set if result is 0
+	set_flag(FLAG_SUB, false); // reset
+	set_flag(FLAG_HALF_CARRY, (((target & 0xF) + (value & 0xF)) & 0x10)); // Set if carry from bit 3
+	set_flag(FLAG_CARRY, (result > 0xFF)); // Set if carry from bit 7
 
-	set_flag(FLAG_SUB, false);
-	// H - Set if carry from bit 3
-	// C - Set if carry from bit 7
+	target = result;
 }
 
 void CPU::ADD(Byte& target, Address addr)
 {
 	Byte val = memory.read(addr);
 	ADD(target, val);
+}
+
+void CPU::ADDC(Byte& target, Byte value)
+{
+	int carry = (reg_F & FLAG_CARRY) ? 1 : 0;
+	ADD(target, value);
+	target += carry;
+}
+
+void CPU::ADDC(Byte& target, Address addr)
+{
+	Byte val = memory.read(addr);
+	ADDC(target, val);
 }

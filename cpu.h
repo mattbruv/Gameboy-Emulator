@@ -37,6 +37,8 @@ class CPU
 		Address address(Byte high, Byte low);
 		int parse_opcode(Opcode code);
 
+		Byte high_nibble(Byte target);
+		Byte low_nibble(Byte target);
 		Byte high_reg_pair(Byte_2 reg_pair);
 		Byte low_reg_pair(Byte_2 reg_pair);
 		void dec_reg_pair(Byte& high, Byte& low);
@@ -58,4 +60,7 @@ class CPU
 
 		void ADD(Byte& target, Byte value);
 		void ADD(Byte& target, Address addr);
+
+		void ADDC(Byte& target, Byte value);
+		void ADDC(Byte& target, Address addr);
 };
