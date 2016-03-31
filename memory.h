@@ -5,7 +5,7 @@
 class Memory
 {
 	private:
-		Byte MemoryMap[0xFFFF];
+		Byte MemoryMap[0x10000];
 
 	public:
 
