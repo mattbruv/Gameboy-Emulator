@@ -60,7 +60,29 @@ class CPU
 
 		void ADD(Byte& target, Byte value);
 		void ADD(Byte& target, Address addr);
-
 		void ADDC(Byte& target, Byte value);
 		void ADDC(Byte& target, Address addr);
+
+		void SUB(Byte& target, Byte value);
+		void SUB(Byte& target, Address addr);
+		void SUBC(Byte& target, Byte value);
+		void SUBC(Byte& target, Address addr);
+
+		void AND(Byte& target, Byte value);
+		void AND(Byte& target, Address addr);
+
+		void OR(Byte& target, Byte value);
+		void OR(Byte& target, Address addr);
+
+		void XOR(Byte& target, Byte value);
+		void XOR(Byte& target, Address addr);
+
+		void CP(Byte& target, Byte value);
+		void CP(Byte& target, Address addr);
+
+		void INC(Byte& target);
+		void INC(Address addr);
+
+		void DEC(Byte& target);
+		void DEC(Address addr);
 };

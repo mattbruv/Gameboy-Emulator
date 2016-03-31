@@ -91,16 +91,16 @@ void CPU::set_flag(int flag, bool value)
 
 void CPU::debug()
 {
-	reg_A = 10;
-	parse_opcode(0x8E);
+	reg_A = 40;
+	parse_opcode(0xE6);
 }
 
 int CPU::parse_opcode(Opcode code)
 {
 	int opbytes = 1;
 
-	Byte value = 1; // 11000011 little byte
-	Byte value2 = 200; // 11001000 high byte
+	Byte value = 200;
+	Byte value2 = 200;
 
 	Byte addr1 = 0b00000000;
 	Byte addr2 = 0b00000101;
@@ -250,6 +250,84 @@ int CPU::parse_opcode(Opcode code)
 		case 0x8D: ADDC(reg_A, reg_L); break;
 		case 0x8E: ADDC(reg_A, address(reg_H, reg_L)); break;
 		case 0xCE: ADDC(reg_A, value); opbytes = 2; break; // UNTESTED
+		// 82
+		case 0x97: SUB(reg_A, reg_A); break;
+		case 0x90: SUB(reg_A, reg_B); break;
+		case 0x91: SUB(reg_A, reg_C); break;
+		case 0x92: SUB(reg_A, reg_D); break;
+		case 0x93: SUB(reg_A, reg_E); break;
+		case 0x94: SUB(reg_A, reg_H); break;
+		case 0x95: SUB(reg_A, reg_L); break;
+		case 0x96: SUB(reg_A, address(reg_H, reg_L)); break; // UNTESTED
+		case 0xD6: SUB(reg_A, value); opbytes = 2; break; // UNTESTED
+		// 83
+		case 0x9F: SUBC(reg_A, reg_A); break;
+		case 0x98: SUBC(reg_A, reg_B); break;
+		case 0x99: SUBC(reg_A, reg_C); break;
+		case 0x9A: SUBC(reg_A, reg_D); break;
+		case 0x9B: SUBC(reg_A, reg_E); break;
+		case 0x9C: SUBC(reg_A, reg_H); break;
+		case 0x9D: SUBC(reg_A, reg_L); break;
+		case 0x9E: SUBC(reg_A, address(reg_H, reg_L)); break;
+		// case 0x??: SUBC(reg_A, value); opbytes = 2;  break; // Opcode ?? ? in manual
+		// 84
+		case 0xA7: AND(reg_A, reg_A); break;
+		case 0xA0: AND(reg_A, reg_B); break;
+		case 0xA1: AND(reg_A, reg_C); break;
+		case 0xA2: AND(reg_A, reg_D); break;
+		case 0xA3: AND(reg_A, reg_E); break;
+		case 0xA4: AND(reg_A, reg_H); break;
+		case 0xA5: AND(reg_A, reg_L); break;
+		case 0xA6: AND(reg_A, address(reg_H, reg_L)); break;
+		case 0xE6: AND(reg_A, value); opbytes = 2; break;
+		// 85
+		case 0xB7: OR(reg_A, reg_A); break;
+		case 0xB0: OR(reg_A, reg_B); break;
+		case 0xB1: OR(reg_A, reg_C); break;
+		case 0xB2: OR(reg_A, reg_D); break;
+		case 0xB3: OR(reg_A, reg_E); break;
+		case 0xB4: OR(reg_A, reg_H); break;
+		case 0xB5: OR(reg_A, reg_L); break;
+		case 0xB6: OR(reg_A, address(reg_H, reg_L)); break;
+		case 0xF6: OR(reg_A, value); opbytes = 2; break;
+		// 86
+		case 0xAF: XOR(reg_A, reg_A); break;
+		case 0xA8: XOR(reg_A, reg_B); break;
+		case 0xA9: XOR(reg_A, reg_C); break;
+		case 0xAA: XOR(reg_A, reg_D); break;
+		case 0xAB: XOR(reg_A, reg_E); break;
+		case 0xAC: XOR(reg_A, reg_H); break;
+		case 0xAD: XOR(reg_A, reg_L); break;
+		case 0xAE: XOR(reg_A, address(reg_H, reg_L)); break;
+		case 0xEE: XOR(reg_A, value); opbytes = 2; break; // * parameter in manual, assumed immediate value
+		// 87
+		case 0xBF: CP(reg_A, reg_A); break;
+		case 0xB8: CP(reg_A, reg_B); break;
+		case 0xB9: CP(reg_A, reg_C); break;
+		case 0xBA: CP(reg_A, reg_D); break;
+		case 0xBB: CP(reg_A, reg_E); break;
+		case 0xBC: CP(reg_A, reg_H); break;
+		case 0xBD: CP(reg_A, reg_L); break;
+		case 0xBE: CP(reg_A, address(reg_H, reg_L)); break;
+		case 0xFE: CP(reg_A, value); opbytes = 2; break;
+		// 88
+		case 0x3C: INC(reg_A); break;
+		case 0x04: INC(reg_B); break;
+		case 0x0C: INC(reg_C); break;
+		case 0x14: INC(reg_D); break;
+		case 0x1C: INC(reg_E); break;
+		case 0x24: INC(reg_H); break;
+		case 0x2C: INC(reg_L); break;
+		case 0x34: INC(address(reg_H, reg_L)); break;
+		// 89
+		case 0x3D: DEC(reg_A); break;
+		case 0x05: DEC(reg_B); break;
+		case 0x0D: DEC(reg_C); break;
+		case 0x15: DEC(reg_D); break;
+		case 0x1D: DEC(reg_E); break;
+		case 0x25: DEC(reg_H); break;
+		case 0x2D: DEC(reg_L); break;
+		case 0x35: DEC(address(reg_H, reg_L)); break;
 	}
 
 	return opbytes;
@@ -329,7 +407,7 @@ void CPU::ADD(Byte& target, Byte value)
 	set_flag(FLAG_HALF_CARRY, (((target & 0xF) + (value & 0xF)) & 0x10)); // Set if carry from bit 3
 	set_flag(FLAG_CARRY, (result > 0xFF)); // Set if carry from bit 7
 
-	target = result;
+	target += value;
 }
 
 void CPU::ADD(Byte& target, Address addr)
@@ -349,4 +427,138 @@ void CPU::ADDC(Byte& target, Address addr)
 {
 	Byte val = memory.read(addr);
 	ADDC(target, val);
+}
+
+void CPU::SUB(Byte& target, Byte value)
+{
+	int result = target - value;
+
+	set_flag(FLAG_ZERO, (result == 0)); // set if result is zero
+	set_flag(FLAG_SUB, true); // set
+	// GB CPU manual says to set this flag if there is NO borrow from bit 4, Z80 manual says otherwise?
+	// as of now it sets half carry if there was a borrow
+	set_flag(FLAG_HALF_CARRY, (((target & 0xF) - (value & 0xF)) < 0));
+	set_flag(FLAG_CARRY, (result < 0)); // set if borrow
+
+	target -= value;
+}
+
+void CPU::SUB(Byte& target, Address addr)
+{
+	Byte val = memory.read(addr);
+	SUB(target, val);
+}
+
+void CPU::SUBC(Byte& target, Byte value)
+{
+	int carry = (reg_F & FLAG_CARRY) ? 1 : 0;
+	SUB(target, value);
+	target -= carry;
+}
+
+void CPU::SUBC(Byte& target, Address addr)
+{
+	Byte val = memory.read(addr);
+	SUBC(target, val);
+}
+
+void CPU::AND(Byte& target, Byte value)
+{
+	target &= value;
+
+	set_flag(FLAG_ZERO, (target == 0));
+	set_flag(FLAG_SUB, false);
+	set_flag(FLAG_HALF_CARRY, true);
+	set_flag(FLAG_CARRY, false);
+}
+
+void CPU::AND(Byte& target, Address addr)
+{
+	Byte val = memory.read(addr);
+	AND(target, val);
+}
+
+void CPU::OR(Byte& target, Byte value)
+{
+	target |= value;
+
+	set_flag(FLAG_ZERO, (target == 0));
+	set_flag(FLAG_SUB, false);
+	set_flag(FLAG_HALF_CARRY, false);
+	set_flag(FLAG_CARRY, false);
+}
+
+void CPU::OR(Byte& target, Address addr)
+{
+	Byte val = memory.read(addr);
+	OR(target, val);
+}
+
+void CPU::XOR(Byte& target, Byte value)
+{
+	target ^= value;
+
+	set_flag(FLAG_ZERO, (target == 0));
+	set_flag(FLAG_SUB, false);
+	set_flag(FLAG_HALF_CARRY, false);
+	set_flag(FLAG_CARRY, false);
+}
+
+void CPU::XOR(Byte& target, Address addr)
+{
+	Byte val = memory.read(addr);
+	OR(target, val);
+}
+
+// Compare A with n. This is basically a A - n subtraction but the results are thrown away
+void CPU::CP(Byte& target, Byte value)
+{
+	int result = target - value;
+
+	set_flag(FLAG_ZERO, (result == 0)); // set if result is zero
+	set_flag(FLAG_SUB, true); // set
+	set_flag(FLAG_HALF_CARRY, (((target & 0xF) - (value & 0xF)) < 0));
+	set_flag(FLAG_CARRY, (result < 0)); // set if borrow
+}
+
+void CPU::CP(Byte& target, Address addr)
+{
+	Byte val = memory.read(addr);
+	CP(target, val);
+}
+
+void CPU::INC(Byte& target)
+{
+	int result = target + 1;
+
+	set_flag(FLAG_ZERO, (result == 0));
+	set_flag(FLAG_SUB, false);
+	set_flag(FLAG_HALF_CARRY, (((target & 0xF) + 1) & 0x10));
+
+	target++;
+}
+
+void CPU::INC(Address addr)
+{
+	Byte value = memory.read(addr);
+	INC(value);
+	memory.write(addr, value);
+}
+
+void CPU::DEC(Byte& target)
+{
+	int result = target - 1;
+
+	set_flag(FLAG_ZERO, (result == 0));
+	set_flag(FLAG_SUB, true);
+	set_flag(FLAG_HALF_CARRY, (((target & 0xF) - 1) < 0));
+
+	target--;
+}
+
+void CPU::DEC(Address addr)
+{
+	Byte value = memory.read(addr);
+	DEC(value);
+	memory.write(addr, value);
 }
