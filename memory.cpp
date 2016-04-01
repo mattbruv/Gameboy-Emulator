@@ -3,7 +3,7 @@
 
 Memory::Memory()
 {
-	for (int i = 0; i < 0xFFFF; i++)
+	for (int i = 0; i < 0x10000; i++)
 	{
 		MemoryMap[i] = rand() % 0xFF;
 	}
@@ -14,7 +14,7 @@ void Memory::write(int location, Byte data)
 	MemoryMap[location] = data;
 }
 
-unsigned char Memory::read(int location)
+Byte Memory::read(int location)
 {
 	return MemoryMap[location];
 }

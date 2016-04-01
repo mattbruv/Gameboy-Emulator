@@ -16,6 +16,8 @@ class Pair
 		void dec();
 		void set(Byte_2 value);
 		void set(Byte upper, Byte lower);
+		Byte_2 get();
+
 		Address address();
 };
 
@@ -69,13 +71,13 @@ class CPU
 
 		void ADD(Byte& target, Byte value);
 		void ADD(Byte& target, Address addr);
-		void ADDC(Byte& target, Byte value);
-		void ADDC(Byte& target, Address addr);
+		void ADC(Byte& target, Byte value);
+		void ADC(Byte& target, Address addr);
 
 		void SUB(Byte& target, Byte value);
 		void SUB(Byte& target, Address addr);
-		void SUBC(Byte& target, Byte value);
-		void SUBC(Byte& target, Address addr);
+		void SBC(Byte& target, Byte value);
+		void SBC(Byte& target, Address addr);
 
 		void AND(Byte& target, Byte value);
 		void AND(Byte& target, Address addr);
@@ -94,4 +96,16 @@ class CPU
 
 		void DEC(Byte& target);
 		void DEC(Address addr);
+
+		// 16-bit arithmetic
+		void ADD16(Byte_2 target, Byte_2 value);
+		void ADDHL(Pair reg_pair);
+		void ADDSP(Byte value);
+
+		void INC(Pair reg_pair);
+		void DEC(Pair reg_pair);
+
+		// Rotate shift instructions
+		void RLA(bool carry);
+		void RRA(bool carry);
 };
