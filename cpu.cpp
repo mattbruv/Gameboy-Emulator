@@ -391,38 +391,252 @@ void CPU::DEC(Pair reg_pair)
 
 // Rotate Shift Instructions
 
-void CPU::RLA(bool carry)
+// Rotate 1-bit Left
+void CPU::RL(Byte& target, bool carry, bool zero_flag)
 {
-	int bit7 = ((reg_A & 0x80) != 0);
-	reg_A = reg_A << 1;
+	int bit7 = ((target & 0x80) != 0);
+	target = target << 1;
 
-	reg_A |= (carry) ? ((reg_F & FLAG_CARRY) != 0) : bit7;
+	target |= (carry) ? ((reg_F & FLAG_CARRY) != 0) : bit7;
 
-	set_flag(FLAG_ZERO, false);
+	set_flag(FLAG_ZERO, ((zero_flag) ? (target == 0) : false));
 	set_flag(FLAG_SUB, false);
 	set_flag(FLAG_HALF_CARRY, false);
 	set_flag(FLAG_CARRY, (bit7 != 0));
 }
 
-void CPU::RRA(bool carry)
+void CPU::RL(Address addr, bool carry)
 {
-	int bit1 = ((reg_A & 0x1) != 0);
-	reg_A = reg_A >> 1;
+	Byte value = memory.read(addr);
+	RL(value, carry, true);
+	memory.write(addr, value);
+}
 
-	reg_A |= (carry) ? (((reg_F & FLAG_CARRY) != 0) << 7) : (bit1 << 7);
+void CPU::RR(Byte& target, bool carry, bool zero_flag)
+{
+	int bit1 = ((target & 0x1) != 0);
+	target = target >> 1;
 
-	set_flag(FLAG_ZERO, false);
+	target |= (carry) ? (((reg_F & FLAG_CARRY) != 0) << 7) : (bit1 << 7);
+
+	set_flag(FLAG_ZERO, ((zero_flag) ? (target == 0) : false));
 	set_flag(FLAG_SUB, false);
 	set_flag(FLAG_HALF_CARRY, false);
 	set_flag(FLAG_CARRY, (bit1 != 0));
+}
+
+void CPU::RR(Address addr, bool carry)
+{
+	Byte value = memory.read(addr);
+	RR(value, carry, true);
+	memory.write(addr, value);
+}
+
+// same as shift left but bit 0 is reset
+void CPU::SLA(Byte& target)
+{
+	RL(target, true, true);
+}
+
+void CPU::SLA(Address addr)
+{
+	Byte value = memory.read(addr);
+	SLA(value);
+	memory.write(addr, value);
+}
+
+// same as shift right but bit 7 is unchanged
+void CPU::SRA(Byte& target)
+{
+	// content of bit 7 is unchanged
+	int bit7 = ((target & 0x80) != 0);
+	RR(target, true);
+	target |= (bit7 << 7);
+	set_flag(FLAG_ZERO, (target == 0));
+}
+
+void CPU::SRA(Address addr)
+{
+	Byte value = memory.read(addr);
+	SRA(value);
+	memory.write(addr, value);
+}
+
+// same as shift right but bit 7 is reset
+void CPU::SRL(Byte& target)
+{
+	RR(target, true, true);
+}
+
+void CPU::SRL(Address addr)
+{
+	Byte value = memory.read(addr);
+	SRL(value);
+	memory.write(addr, value);
+}
+
+// swap high nibble with low nibble
+void CPU::SWAP(Byte& target)
+{
+	target = ((target >> 4) | (target << 4));
+	set_flag(FLAG_ZERO, (target == 0));
+}
+
+void CPU::SWAP(Address addr)
+{
+	Byte value = memory.read(addr);
+	SWAP(value);
+	memory.write(addr, value);
+}
+
+// Bit Operations
+
+void CPU::BIT(Byte target, int bit)
+{
+	set_flag(FLAG_ZERO, (~((1 << bit) & target) != 0));
+	set_flag(FLAG_HALF_CARRY, true);
+	set_flag(FLAG_SUB, false);
+}
+
+void CPU::parse_bit_op(Opcode code)
+{
+	switch (code)
+	{
+		case 0x07: RL(reg_A, false, true); break;
+		case 0x00: RL(reg_B, false, true); break;
+		case 0x01: RL(reg_C, false, true); break;
+		case 0x02: RL(reg_D, false, true); break;
+		case 0x03: RL(reg_E, false, true); break;
+		case 0x04: RL(reg_H, false, true); break;
+		case 0x05: RL(reg_L, false, true); break;
+		case 0x06: RL(Pair(reg_H, reg_L).address(), false); break;
+		case 0x17: RL(reg_A, true, true); break;
+		case 0x10: RL(reg_B, true, true); break;
+		case 0x11: RL(reg_C, true, true); break;
+		case 0x12: RL(reg_D, true, true); break;
+		case 0x13: RL(reg_E, true, true); break;
+		case 0x14: RL(reg_H, true, true); break;
+		case 0x15: RL(reg_L, true, true); break;
+		case 0x16: RL(Pair(reg_H, reg_L).address(), true); break;
+
+		case 0x0F: RR(reg_A, false, true); break;
+		case 0x08: RR(reg_B, false, true); break;
+		case 0x09: RR(reg_C, false, true); break;
+		case 0x0A: RR(reg_D, false, true); break;
+		case 0x0B: RR(reg_E, false, true); break;
+		case 0x0C: RR(reg_H, false, true); break;
+		case 0x0D: RR(reg_L, false, true); break;
+		case 0x0E: RR(Pair(reg_H, reg_L).address(), false); break;
+		case 0x1F: RR(reg_A, true, true); break;
+		case 0x18: RR(reg_B, true, true); break;
+		case 0x19: RR(reg_C, true, true); break;
+		case 0x1A: RR(reg_D, true, true); break;
+		case 0x1B: RR(reg_E, true, true); break;
+		case 0x1C: RR(reg_H, true, true); break;
+		case 0x1D: RR(reg_L, true, true); break;
+		case 0x1E: RR(Pair(reg_H, reg_L).address(), false); break; // this could actually have a different beginning opcode, check manual
+
+		case 0x27: SLA(reg_A); break;
+		case 0x20: SLA(reg_B); break;
+		case 0x21: SLA(reg_C); break;
+		case 0x22: SLA(reg_D); break;
+		case 0x23: SLA(reg_E); break;
+		case 0x24: SLA(reg_H); break;
+		case 0x25: SLA(reg_L); break;
+		case 0x26: SLA(Pair(reg_H, reg_L).address()); break; // this could actually have a different beginning opcode, check manual
+
+		case 0x2F: SRA(reg_A); break;
+		case 0x28: SRA(reg_B); break;
+		case 0x29: SRA(reg_C); break;
+		case 0x2A: SRA(reg_D); break;
+		case 0x2B: SRA(reg_E); break;
+		case 0x2C: SRA(reg_H); break;
+		case 0x2D: SRA(reg_L); break;
+		case 0x2E: SRA(Pair(reg_H, reg_L).address()); break;
+
+		case 0x3F: SRL(reg_A); break;
+		case 0x38: SRL(reg_B); break;
+		case 0x39: SRL(reg_C); break;
+		case 0x3A: SRL(reg_D); break;
+		case 0x3B: SRL(reg_E); break;
+		case 0x3C: SRL(reg_H); break;
+		case 0x3D: SRL(reg_L); break;
+		case 0x3E: SRL(Pair(reg_H, reg_L).address()); break;
+
+		case 0x37: SWAP(reg_A); break;
+		case 0x30: SWAP(reg_B); break;
+		case 0x31: SWAP(reg_C); break;
+		case 0x32: SWAP(reg_D); break;
+		case 0x33: SWAP(reg_E); break;
+		case 0x34: SWAP(reg_H); break;
+		case 0x35: SWAP(reg_L); break;
+		case 0x36: SWAP(Pair(reg_H, reg_L).address()); break;
+
+		case 0x47: BIT(reg_A, 0); break;
+		case 0x4F: BIT(reg_A, 1); break;
+		case 0x57: BIT(reg_A, 2); break;
+		case 0x5F: BIT(reg_A, 3); break;
+		case 0x67: BIT(reg_A, 4); break;
+		case 0x6F: BIT(reg_A, 5); break;
+		case 0x77: BIT(reg_A, 6); break;
+		case 0x7F: BIT(reg_A, 7); break;
+		case 0x40: BIT(reg_B, 0); break;
+		case 0x48: BIT(reg_B, 1); break;
+		case 0x50: BIT(reg_B, 2); break;
+		case 0x58: BIT(reg_B, 3); break;
+		case 0x60: BIT(reg_B, 4); break;
+		case 0x68: BIT(reg_B, 5); break;
+		case 0x70: BIT(reg_B, 6); break;
+		case 0x78: BIT(reg_B, 7); break;
+		case 0x41: BIT(reg_C, 0); break;
+		case 0x49: BIT(reg_C, 1); break;
+		case 0x51: BIT(reg_C, 2); break;
+		case 0x59: BIT(reg_C, 3); break;
+		case 0x61: BIT(reg_C, 4); break;
+		case 0x69: BIT(reg_C, 5); break;
+		case 0x71: BIT(reg_C, 6); break;
+		case 0x79: BIT(reg_C, 7); break;
+		case 0x42: BIT(reg_D, 0); break;
+		case 0x4A: BIT(reg_D, 1); break;
+		case 0x52: BIT(reg_D, 2); break;
+		case 0x5A: BIT(reg_D, 3); break;
+		case 0x62: BIT(reg_D, 4); break;
+		case 0x6A: BIT(reg_D, 5); break;
+		case 0x72: BIT(reg_D, 6); break;
+		case 0x7A: BIT(reg_D, 7); break;
+		case 0x43: BIT(reg_E, 0); break;
+		case 0x4B: BIT(reg_E, 1); break;
+		case 0x53: BIT(reg_E, 2); break;
+		case 0x5B: BIT(reg_E, 3); break;
+		case 0x63: BIT(reg_E, 4); break;
+		case 0x6B: BIT(reg_E, 5); break;
+		case 0x73: BIT(reg_E, 6); break;
+		case 0x7B: BIT(reg_E, 7); break;
+		case 0x44: BIT(reg_H, 0); break;
+		case 0x4C: BIT(reg_H, 1); break;
+		case 0x54: BIT(reg_H, 2); break;
+		case 0x5C: BIT(reg_H, 3); break;
+		case 0x64: BIT(reg_H, 4); break;
+		case 0x6C: BIT(reg_H, 5); break;
+		case 0x74: BIT(reg_H, 6); break;
+		case 0x7C: BIT(reg_H, 7); break;
+		case 0x45: BIT(reg_L, 0); break;
+		case 0x4D: BIT(reg_L, 1); break;
+		case 0x55: BIT(reg_L, 2); break;
+		case 0x5D: BIT(reg_L, 3); break;
+		case 0x65: BIT(reg_L, 4); break;
+		case 0x6D: BIT(reg_L, 5); break;
+		case 0x75: BIT(reg_L, 6); break;
+		case 0x7D: BIT(reg_L, 7); break;
+	}
 }
 
 int CPU::parse_opcode(Opcode code)
 {
 	int opbytes = 1;
 
-	Byte value = 0x2;
-	Byte value2 = 0xC1;
+	Byte value = 0x37;
+	Byte value2 = 0;
 
 	// REG_D could possibly be incorrect, assumed current value from manual to match GBCPUman
 	switch (code)
@@ -641,11 +855,13 @@ int CPU::parse_opcode(Opcode code)
 		case 0x2B: DEC(Pair(reg_H, reg_L)); break;
 		case 0x3B: DEC(Pair(reg_A, reg_F)); break;
 		// 98
-		case 0x07: RLA(true); break; // manual shows the logic switched for these functions
-		case 0x17: RLA(false); break; // implementation matches expected output for these two
+		case 0x07: RL(reg_A, true); break; // manual shows the logic switched for these functions
+		case 0x17: RL(reg_A, false); break; // implementation matches expected output for these two
+		case 0x0F: RR(reg_A, false); break; // implementation matches expected output when these two instructions are switched
+		case 0x1F: RR(reg_A, true); break;
+		// 99, 100!
+		case 0xCB: parse_bit_op(value); opbytes = 2; break;
 
-		case 0x0F: RRA(false); break; // implementation matches expected output when these two instructions are switched
-		case 0x1F: RRA(true); break;
 	}
 
 	return opbytes;
@@ -653,7 +869,7 @@ int CPU::parse_opcode(Opcode code)
 
 void CPU::debug()
 {
-	reg_A = 0x81;
+	reg_A = 0xF0;
 	set_flag(FLAG_CARRY, false);
-	parse_opcode(0x1F);
+	parse_opcode(0xCB);
 }

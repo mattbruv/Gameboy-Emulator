@@ -9,12 +9,12 @@ Memory::Memory()
 	}
 }
 
-void Memory::write(int location, Byte data)
+void Memory::write(Address location, Byte data)
 {
 	MemoryMap[location] = data;
 }
 
-Byte Memory::read(int location)
+Byte Memory::read(Address location)
 {
 	return MemoryMap[location];
 }

@@ -53,6 +53,7 @@ class CPU
 		void interrupt_signal();
 		void stop();
 		int parse_opcode(Opcode code);
+		void parse_bit_op(Opcode code);
 		void set_flag(int flag, bool value);
 
 		// 8-bit loads
@@ -106,6 +107,21 @@ class CPU
 		void DEC(Pair reg_pair);
 
 		// Rotate shift instructions
-		void RLA(bool carry);
-		void RRA(bool carry);
+		void RL(Byte& target, bool carry, bool zero_flag = false);
+		void RL(Address addr, bool carry);
+		void RR(Byte& target, bool carry, bool zero_flag = false);
+		void RR(Address addr, bool carry);
+
+		void SLA(Byte& target);
+		void SLA(Address addr);
+		void SRA(Byte& target);
+		void SRA(Address addr);
+		void SRL(Byte& target);
+		void SRL(Address addr);
+
+		void SWAP(Byte& target);
+		void SWAP(Address addr);
+
+		// Bit Operations
+		void BIT(Byte target, int bit);
 };

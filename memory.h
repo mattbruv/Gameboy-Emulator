@@ -24,6 +24,6 @@ class Memory
 
 		Memory::Memory();
 
-		void write(int location, Byte data);
-		Byte read(int location);
+		void write(Address location, Byte data);
+		Byte read(Address location);
 };
