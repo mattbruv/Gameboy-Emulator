@@ -124,4 +124,11 @@ class CPU
 
 		// Bit Operations
 		void BIT(Byte target, int bit);
+		void BIT(Address addr, int bit);
+
+		void SET(Byte& target, int bit);
+		void SET(Address addr, int bit);
+
+		void RES(Byte& target, int bit);
+		void RES(Address addr, int bit);
 };
