@@ -138,4 +138,6 @@ class CPU
 		void JPZ(Pair target);
 		void JPNC(Pair target);
 		void JPC(Pair target);
+
+		void JPHL();
 };

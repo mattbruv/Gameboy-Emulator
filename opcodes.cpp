@@ -504,7 +504,26 @@ int CPU::parse_opcode(Opcode code)
 		case 0xCB: parse_bit_op(value); opbytes = 2; break;
 		// 105
 		case 0xC3: JP(Pair(value2, value)); opbytes = 3; break;
+
+		case 0xC2: JPNZ(Pair(value2, value)); opbytes = 3; break;
+		case 0xCA: JPZ(Pair(value2, value)); opbytes = 3; break;
+		case 0xD2: JPNC(Pair(value2, value)); opbytes = 3; break;
+		case 0xDA: JPC(Pair(value2, value)); opbytes = 3; break;
+
+		case 0xE9: JPHL(); break;
 	}
 
 	return opbytes;
+}
+
+
+
+while (true)
+{
+	read the opcode...
+	do what the opcode tells you to do...
+	do the next opcode
+
+	render the video
+	play the audio
 }

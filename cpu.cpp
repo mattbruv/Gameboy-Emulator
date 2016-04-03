@@ -561,10 +561,15 @@ void CPU::JPNC(Pair target)
 
 void CPU::JPC(Pair target)
 {
-	if ((reg_F & FLAG_CARRY) = 0)
+	if ((reg_F & FLAG_CARRY) != 0)
 		JP(target);
 	else
 		reg_PC++;
+}
+
+void CPU::JPHL()
+{
+	reg_PC = Pair(reg_H, reg_L).address();
 }
 
 void CPU::debug()
