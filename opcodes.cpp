@@ -277,7 +277,7 @@ int CPU::parse_opcode(Opcode code)
 	int opbytes = 1;
 
 	Byte value = 0x8F;
-	Byte value2 = 0;
+	Byte value2 = 1;
 
 	// REG_D could possibly be incorrect, assumed current value from manual to match GBCPUman
 	switch (code)
@@ -500,9 +500,10 @@ int CPU::parse_opcode(Opcode code)
 		case 0x17: RL(reg_A, false); break; // implementation matches expected output for these two
 		case 0x0F: RR(reg_A, false); break; // implementation matches expected output when these two instructions are switched
 		case 0x1F: RR(reg_A, true); break;
-		// 99.. 100!
+		// 99 - 104
 		case 0xCB: parse_bit_op(value); opbytes = 2; break;
-
+		// 105
+		case 0xC3: JP(Pair(value2, value)); opbytes = 3; break;
 	}
 
 	return opbytes;

@@ -528,8 +528,46 @@ void CPU::RES(Address addr, int bit)
 	memory.write(addr, value);
 }
 
+// Miscellaneous Operations.
+
+void CPU::JP(Pair target)
+{
+	reg_PC = target.address();
+}
+
+void CPU::JPNZ(Pair target)
+{
+	if ((reg_F & FLAG_ZERO) != 0)
+		JP(target);
+	else
+		reg_PC++;
+}
+
+void CPU::JPZ(Pair target)
+{
+	if ((reg_F & FLAG_ZERO) == 0)
+		JP(target);
+	else
+		reg_PC++;
+}
+
+void CPU::JPNC(Pair target)
+{
+	if ((reg_F & FLAG_CARRY) == 0)
+		JP(target);
+	else
+		reg_PC++;
+}
+
+void CPU::JPC(Pair target)
+{
+	if ((reg_F & FLAG_CARRY) = 0)
+		JP(target);
+	else
+		reg_PC++;
+}
+
 void CPU::debug()
 {
-	reg_A = 0x3B;
-	parse_opcode(0xCB);
+	parse_opcode(0xC3);
 }

@@ -131,4 +131,11 @@ class CPU
 
 		void RES(Byte& target, int bit);
 		void RES(Address addr, int bit);
+
+		// Miscellaneous Instructions
+		void JP(Pair target);
+		void JPNZ(Pair target);
+		void JPZ(Pair target);
+		void JPNC(Pair target);
+		void JPC(Pair target);
 };
