@@ -52,7 +52,7 @@ class CPU
 		void execute(int cycles);
 		void interrupt_signal();
 		void stop();
-		int parse_opcode(Opcode code);
+		void parse_opcode(Opcode code);
 		void parse_bit_op(Opcode code);
 		void set_flag(int flag, bool value);
 
@@ -122,7 +122,7 @@ class CPU
 		void SWAP(Byte& target);
 		void SWAP(Address addr);
 
-		// Bit Operations
+		// Bit operations
 		void BIT(Byte target, int bit);
 		void BIT(Address addr, int bit);
 
@@ -132,12 +132,26 @@ class CPU
 		void RES(Byte& target, int bit);
 		void RES(Address addr, int bit);
 
-		// Miscellaneous Instructions
+		// Jump instructions
 		void JP(Pair target);
 		void JPNZ(Pair target);
 		void JPZ(Pair target);
 		void JPNC(Pair target);
 		void JPC(Pair target);
+		void JR(Byte value);
 
+		void JRNZ(Byte value);
+		void JRZ(Byte value);
+		void JRNC(Byte value);
+		void JRC(Byte value);
 		void JPHL();
+
+		// Function Instructions
+		void CALL(Byte low, Byte high);
+		void CALLNZ(Byte low, Byte high);
+		void CALLZ(Byte low, Byte high);
+		void CALLNC(Byte low, Byte high);
+		void CALLC(Byte low, Byte high);
+
+		void RET();
 };

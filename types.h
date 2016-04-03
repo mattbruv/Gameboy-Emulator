@@ -7,3 +7,4 @@ using namespace std;
 
 typedef unsigned short Address, Byte_2;
 typedef unsigned char Byte, Opcode;
+typedef signed char Byte_Signed;

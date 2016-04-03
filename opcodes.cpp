@@ -272,12 +272,10 @@ void CPU::parse_bit_op(Opcode code)
 	}
 }
 
-int CPU::parse_opcode(Opcode code)
+void CPU::parse_opcode(Opcode code)
 {
-	int opbytes = 1;
-
-	Byte value = 0x8F;
-	Byte value2 = 1;
+	Byte value = 0x34;
+	Byte value2 = 0x12;
 
 	// REG_D could possibly be incorrect, assumed current value from manual to match GBCPUman
 	switch (code)
@@ -332,13 +330,13 @@ int CPU::parse_opcode(Opcode code)
 		case 0x6B: LD(reg_L, reg_E); break;
 		case 0x6C: LD(reg_L, reg_H); break;
 		case 0x6D: LD(reg_L, reg_L); break;
-		case 0x3E: LD(reg_A, value); opbytes = 2; break;
-		case 0x06: LD(reg_B, value); opbytes = 2; break;
-		case 0x0E: LD(reg_C, value); opbytes = 2; break;
-		case 0x16: LD(reg_D, value); opbytes = 2; break;
-		case 0x1E: LD(reg_E, value); opbytes = 2; break;
-		case 0x26: LD(reg_H, value); opbytes = 2; break;
-		case 0x2E: LD(reg_L, value); opbytes = 2; break;
+		case 0x3E: LD(reg_A, value); break;
+		case 0x06: LD(reg_B, value); break;
+		case 0x0E: LD(reg_C, value); break;
+		case 0x16: LD(reg_D, value); break;
+		case 0x1E: LD(reg_E, value); break;
+		case 0x26: LD(reg_H, value); break;
+		case 0x2E: LD(reg_L, value); break;
 		case 0x7E: LD(reg_A, Pair(reg_H, reg_L).address()); break;
 		case 0x46: LD(reg_B, Pair(reg_H, reg_L).address()); break;
 		case 0x4E: LD(reg_C, Pair(reg_H, reg_L).address()); break;
@@ -354,17 +352,17 @@ int CPU::parse_opcode(Opcode code)
 		case 0x73: LD(Pair(reg_H, reg_L).address(), reg_E); break;
 		case 0x74: LD(Pair(reg_H, reg_L).address(), reg_H); break;
 		case 0x75: LD(Pair(reg_H, reg_L).address(), reg_L); break;
-		case 0x36: LD(Pair(reg_H, reg_L).address(), value); opbytes = 2; break;
-		case 0x0A: LD(Pair(reg_B, reg_C).address(), value); opbytes = 2; break;
-		case 0x1A: LD(Pair(reg_D, reg_E).address(), value); opbytes = 2; break;
+		case 0x36: LD(Pair(reg_H, reg_L).address(), value); break;
+		case 0x0A: LD(Pair(reg_B, reg_C).address(), value); break;
+		case 0x1A: LD(Pair(reg_D, reg_E).address(), value); break;
 		case 0xF2: LD(reg_A, (Address)(0xFF00 + reg_C)); break;
 		// 87
 		case 0xE2: LD((Address)(0xFF00 + reg_C), reg_A); break;
 		case 0xF0: LD(reg_A, (Address)(0xFF00 + value)); break;
 		case 0xE0: LD((Address)(0xFF00 + value), reg_A); break;
-		case 0xFA: LD(reg_A, Pair(value, value2).address()); opbytes = 3; break;
+		case 0xFA: LD(reg_A, Pair(value, value2).address()); break;
 		// 88
-		case 0xEA: LD(Pair(value, value2).address(), reg_A); opbytes = 3; break;
+		case 0xEA: LD(Pair(value, value2).address(), reg_A); break;
 		case 0x2A: LD(reg_A, Pair(reg_H, reg_L).address()); Pair(reg_H, reg_L).inc(); break;
 		case 0x3A: LD(reg_A, Pair(reg_H, reg_L).address()); Pair(reg_H, reg_L).dec(); break;
 		case 0x02: LD(Pair(reg_B, reg_C).address(), reg_A); break;
@@ -373,10 +371,10 @@ int CPU::parse_opcode(Opcode code)
 		case 0x22: LD(Pair(reg_H, reg_L).address(), reg_A); Pair(reg_H, reg_L).inc(); break;
 		case 0x32: LD(Pair(reg_H, reg_L).address(), reg_A); Pair(reg_H, reg_L).dec(); break;
 		// 90
-		case 0x01: LD(Pair(reg_B, reg_C), value, value2); opbytes = 3; break;
-		case 0x11: LD(Pair(reg_D, reg_E), value, value2); opbytes = 3; break; // says DD in nintindo manual, assumed DE pair
-		case 0x21: LD(Pair(reg_H, reg_L), value, value2); opbytes = 3; break;
-		case 0x31: LD(reg_SP, value, value2); opbytes = 3; break;
+		case 0x01: LD(Pair(reg_B, reg_C), value, value2); break;
+		case 0x11: LD(Pair(reg_D, reg_E), value, value2); break; // says DD in nintindo manual, assumed DE pair
+		case 0x21: LD(Pair(reg_H, reg_L), value, value2); break;
+		case 0x31: LD(reg_SP, value, value2); break;
 		case 0xF9: LD(reg_SP, reg_H, reg_L); break;
 		case 0xC5: PUSH(reg_B, reg_C); break;
 		case 0xD5: PUSH(reg_D, reg_E); break;
@@ -387,8 +385,8 @@ int CPU::parse_opcode(Opcode code)
 		case 0xD1: POP(reg_D, reg_E); break;
 		case 0xE1: POP(reg_H, reg_L); break;
 		case 0xF1: POP(reg_A, reg_F); break;
-		case 0xF8: LDHL(value); opbytes = 2; break;
-		case 0x08: LDNN(value, value2); opbytes = 3; break;
+		case 0xF8: LDHL(value); break;
+		case 0x08: LDNN(value, value2); break;
 		// 92
 		case 0x87: ADD(reg_A, reg_A); break;
 		case 0x80: ADD(reg_A, reg_B); break;
@@ -397,7 +395,7 @@ int CPU::parse_opcode(Opcode code)
 		case 0x83: ADD(reg_A, reg_E); break;
 		case 0x84: ADD(reg_A, reg_H); break;
 		case 0x85: ADD(reg_A, reg_L); break;
-		case 0xC6: ADD(reg_A, value); opbytes = 2; break;
+		case 0xC6: ADD(reg_A, value); break;
 		case 0x86: ADD(reg_A, Pair(reg_H, reg_L).address()); break;
 		case 0x8F: ADC(reg_A, reg_A); break;
 		case 0x88: ADC(reg_A, reg_B); break;
@@ -406,7 +404,7 @@ int CPU::parse_opcode(Opcode code)
 		case 0x8B: ADC(reg_A, reg_E); break;
 		case 0x8C: ADC(reg_A, reg_H); break;
 		case 0x8D: ADC(reg_A, reg_L); break;
-		case 0xCE: ADC(reg_A, value); opbytes = 2; break;
+		case 0xCE: ADC(reg_A, value); break;
 		case 0x8E: ADC(reg_A, Pair(reg_H, reg_L).address()); break;
 		// 93
 		case 0x97: SUB(reg_A, reg_A); break;
@@ -416,7 +414,7 @@ int CPU::parse_opcode(Opcode code)
 		case 0x93: SUB(reg_A, reg_E); break;
 		case 0x94: SUB(reg_A, reg_H); break;
 		case 0x95: SUB(reg_A, reg_L); break;
-		case 0xD6: SUB(reg_A, value); opbytes = 2; break;
+		case 0xD6: SUB(reg_A, value); break;
 		case 0x96: SUB(reg_A, Pair(reg_H, reg_L).address()); break;
 		case 0x9F: SBC(reg_A, reg_A); break;
 		case 0x98: SBC(reg_A, reg_B); break;
@@ -425,7 +423,7 @@ int CPU::parse_opcode(Opcode code)
 		case 0x9B: SBC(reg_A, reg_E); break;
 		case 0x9C: SBC(reg_A, reg_H); break;
 		case 0x9D: SBC(reg_A, reg_L); break;
-		case 0xDE: SBC(reg_A, value); opbytes = 2; break;
+		case 0xDE: SBC(reg_A, value); break;
 		case 0x9E: SBC(reg_A, Pair(reg_H, reg_L).address()); break;
 		// 94
 		case 0xA7: AND(reg_A, reg_A); break;
@@ -444,7 +442,7 @@ int CPU::parse_opcode(Opcode code)
 		case 0xB3: OR(reg_A, reg_E); break;
 		case 0xB4: OR(reg_A, reg_H); break;
 		case 0xB5: OR(reg_A, reg_L); break;
-		case 0xF6: OR(reg_A, value); opbytes = 2; break;
+		case 0xF6: OR(reg_A, value); break;
 		case 0xB6: OR(reg_A, Pair(reg_H, reg_L).address()); break;
 		case 0xAF: XOR(reg_A, reg_A); break;
 		case 0xA8: XOR(reg_A, reg_B); break;
@@ -453,7 +451,7 @@ int CPU::parse_opcode(Opcode code)
 		case 0xAB: XOR(reg_A, reg_E); break;
 		case 0xAC: XOR(reg_A, reg_H); break;
 		case 0xAD: XOR(reg_A, reg_L); break;
-		case 0xEE: XOR(reg_A, value); opbytes = 2; break;
+		case 0xEE: XOR(reg_A, value); break;
 		case 0xAE: XOR(reg_A, Pair(reg_H, reg_L).address()); break;
 		// 95 - 96
 		case 0xBF: CP(reg_A, reg_A); break;
@@ -463,7 +461,7 @@ int CPU::parse_opcode(Opcode code)
 		case 0xBB: CP(reg_A, reg_E); break;
 		case 0xBC: CP(reg_A, reg_H); break;
 		case 0xBD: CP(reg_A, reg_L); break;
-		case 0xFE: CP(reg_A, value); opbytes = 2; break;
+		case 0xFE: CP(reg_A, value); break;
 		case 0xBE: CP(reg_A, Pair(reg_H, reg_L).address()); break;
 		case 0x3C: INC(reg_A); break;
 		case 0x04: INC(reg_B); break;
@@ -486,7 +484,7 @@ int CPU::parse_opcode(Opcode code)
 		case 0x19: ADDHL(Pair(reg_D, reg_E)); break;
 		case 0x29: ADDHL(Pair(reg_H, reg_L)); break;
 		case 0x39: ADDHL(Pair(reg_A, reg_F)); break;
-		case 0xE8: ADDSP(value); opbytes = 2; break;
+		case 0xE8: ADDSP(value); break;
 		case 0x03: INC(Pair(reg_B, reg_C)); break;
 		case 0x13: INC(Pair(reg_D, reg_E)); break;
 		case 0x23: INC(Pair(reg_H, reg_L)); break;
@@ -501,29 +499,27 @@ int CPU::parse_opcode(Opcode code)
 		case 0x0F: RR(reg_A, false); break; // implementation matches expected output when these two instructions are switched
 		case 0x1F: RR(reg_A, true); break;
 		// 99 - 104
-		case 0xCB: parse_bit_op(value); opbytes = 2; break;
+		case 0xCB: parse_bit_op(value); break;
 		// 105
-		case 0xC3: JP(Pair(value2, value)); opbytes = 3; break;
-
-		case 0xC2: JPNZ(Pair(value2, value)); opbytes = 3; break;
-		case 0xCA: JPZ(Pair(value2, value)); opbytes = 3; break;
-		case 0xD2: JPNC(Pair(value2, value)); opbytes = 3; break;
-		case 0xDA: JPC(Pair(value2, value)); opbytes = 3; break;
-
+		case 0xC3: JP(Pair(value2, value)); break;
+		case 0xC2: JPNZ(Pair(value2, value)); break;
+		case 0xCA: JPZ(Pair(value2, value)); break;
+		case 0xD2: JPNC(Pair(value2, value)); break;
+		case 0xDA: JPC(Pair(value2, value)); break;
+		case 0x18: JR(value); break;
+		// 106
+		case 0x20: JRNZ(value); break;
+		case 0x28: JRZ(value); break;
+		case 0x30: JRNC(value); break;
+		case 0x38: JRC(value); break;
 		case 0xE9: JPHL(); break;
+		// 107
+		case 0xCD: CALL(value, value2); break;
+		case 0xC4: CALLNZ(value, value2); break;
+		case 0xCC: CALLZ(value, value2); break;
+		case 0xD4: CALLNC(value, value2); break;
+		case 0xDC: CALLC(value, value2); break;
+		// 108
+		case 0xC9: RET(); break;
 	}
-
-	return opbytes;
-}
-
-
-
-while (true)
-{
-	read the opcode...
-	do what the opcode tells you to do...
-	do the next opcode
-
-	render the video
-	play the audio
 }

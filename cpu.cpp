@@ -528,7 +528,7 @@ void CPU::RES(Address addr, int bit)
 	memory.write(addr, value);
 }
 
-// Miscellaneous Operations.
+// Jump Operations
 
 void CPU::JP(Pair target)
 {
@@ -537,7 +537,7 @@ void CPU::JP(Pair target)
 
 void CPU::JPNZ(Pair target)
 {
-	if ((reg_F & FLAG_ZERO) != 0)
+	if ((reg_F & FLAG_ZERO) == 0)
 		JP(target);
 	else
 		reg_PC++;
@@ -545,7 +545,7 @@ void CPU::JPNZ(Pair target)
 
 void CPU::JPZ(Pair target)
 {
-	if ((reg_F & FLAG_ZERO) == 0)
+	if ((reg_F & FLAG_ZERO) != 0)
 		JP(target);
 	else
 		reg_PC++;
@@ -567,12 +567,110 @@ void CPU::JPC(Pair target)
 		reg_PC++;
 }
 
+// Jumps -127 to +129 steps from current address
+void CPU::JR(Byte value)
+{
+	reg_PC += (Byte_Signed)(value - 2);
+}
+
+void CPU::JRNZ(Byte value)
+{
+	if ((reg_F & FLAG_ZERO) == 0)
+		JR(value);
+	else
+		reg_PC++;
+}
+
+void CPU::JRZ(Byte value)
+{
+	if ((reg_F & FLAG_ZERO) != 0)
+		JR(value);
+	else
+		reg_PC++;
+}
+
+void CPU::JRNC(Byte value)
+{
+	if ((reg_F & FLAG_CARRY) == 0)
+		JR(value);
+	else
+		reg_PC++;
+}
+
+void CPU::JRC(Byte value)
+{
+	if ((reg_F & FLAG_CARRY) != 0)
+		JR(value);
+	else
+		reg_PC++;
+}
+
+// Jump to address
 void CPU::JPHL()
 {
 	reg_PC = Pair(reg_H, reg_L).address();
 }
 
+// Function Instructions
+void CPU::CALL(Byte low, Byte high)
+{
+	reg_PC += 3; // 3 byte instruction, so the PC is incremented by 3 before pushing to stack
+
+	memory.write(--reg_SP, high_byte(reg_PC));
+	memory.write(--reg_SP, low_byte(reg_PC));
+
+	JP(Pair(high, low));
+}
+
+void CPU::CALLNZ(Byte low, Byte high)
+{
+	if ((reg_F & FLAG_ZERO) == 0)
+		CALL(low, high);
+	else
+		reg_PC += 3;
+}
+
+void CPU::CALLZ(Byte low, Byte high)
+{
+	if ((reg_F & FLAG_ZERO) != 0)
+		CALL(low, high);
+	else
+		reg_PC += 3;
+}
+
+void CPU::CALLNC(Byte low, Byte high)
+{
+	if ((reg_F & FLAG_CARRY) == 0)
+		CALL(low, high);
+	else
+		reg_PC += 3;
+}
+
+void CPU::CALLC(Byte low, Byte high)
+{
+	if ((reg_F & FLAG_CARRY) != 0)
+		CALL(low, high);
+	else
+		reg_PC += 3;
+}
+
+void CPU::RET()
+{
+	Byte low = memory.read(reg_SP++);
+	Byte high = memory.read(reg_SP++);
+
+	reg_PC = Pair(high, low).get();
+}
+
 void CPU::debug()
 {
-	parse_opcode(0xC3);
+	reg_PC = 0x8000;
+	reg_SP = 0xFFFE;
+	parse_opcode(0xCD);
+
+	parse_opcode(0xC9);
+
+	Byte b1 = memory.read(0xFFFD); // 0x80 or 128
+	Byte b2 = memory.read(0xFFFC); // 0x03 or 3
+	// Stack pointer should be 0xFFFC or 65532
 }
