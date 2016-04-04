@@ -521,5 +521,26 @@ void CPU::parse_opcode(Opcode code)
 		case 0xDC: CALLC(value, value2); break;
 		// 108
 		case 0xC9: RET(); break;
+		case 0xD9: RETI(); break;  // UNIMPLEMENTED
+		case 0xC0: RETNZ(); break;
+		case 0xC8: RETZ(); break;
+		case 0xD0: RETNC(); break;
+		case 0xD8: RETC(); break;
+		// 109
+		case 0xC7: RST(0x00); break;
+		case 0xCF: RST(0x08); break;
+		case 0xD7: RST(0x10); break;
+		case 0xDF: RST(0x18); break;
+		case 0xE7: RST(0x20); break;
+		case 0xEF: RST(0x28); break;
+		case 0xF7: RST(0x30); break;
+		case 0xFF: RST(0x38); break;
+		// 110-111
+		case 0x27: DAA(); break;
+		case 0x2F: CPL(); break;
+		case 0x00: NOP(); break;
+		// 112
+		case 0x76: HALT(); break;
+		case 0x10: STOP(); break;
 	}
 }

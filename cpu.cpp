@@ -20,12 +20,18 @@ Byte high_nibble(Byte target)
 
 Byte low_nibble(Byte target)
 {
+	Byte test = (target & 0xF);
 	return (target & 0xF);
 }
 
 Byte_2 combine(Byte high, Byte low)
 {
 	return (high << 8 | low);
+}
+
+bool between(Byte target, int low, int high)
+{
+	return (target >= low && target <= high);
 }
 
 /*
@@ -662,13 +668,148 @@ void CPU::RET()
 	reg_PC = Pair(high, low).get();
 }
 
+void CPU::RETI() // UNIMPLEMENTED
+{
+	RET();
+	// master interrupt enable flag is returned to pre-interrupt status
+}
+
+void CPU::RETNZ()
+{
+	if ((reg_F & FLAG_ZERO) == 0)
+		RET();
+	else
+		reg_PC += 3;
+}
+
+void CPU::RETZ()
+{
+	if ((reg_F & FLAG_ZERO) != 0)
+		RET();
+	else
+		reg_PC += 3;
+}
+
+void CPU::RETNC()
+{
+	if ((reg_F & FLAG_CARRY) == 0)
+		RET();
+	else
+		reg_PC += 3;
+}
+
+void CPU::RETC()
+{
+	if ((reg_F & FLAG_CARRY) != 0)
+		RET();
+	else
+		reg_PC += 3;
+}
+
+void CPU::RST(Address addr)
+{
+	reg_PC++; // 1 byte instruction
+
+	memory.write(--reg_SP, high_byte(reg_PC));
+	memory.write(--reg_SP, low_byte(reg_PC));
+
+	reg_PC = addr;
+}
+
+// Decimal Adjust Accumulator
+// Binary coded decimal representation is used to set the contents of
+// Register A to a binary coded decimal number
+void CPU::DAA()
+{
+	Byte high = high_nibble(reg_A);
+	Byte low = low_nibble(reg_A);
+
+	bool add = ((reg_F & FLAG_SUB) == 0);
+	bool carry = ((reg_F & FLAG_CARRY) != 0);
+	bool half_carry = ((reg_F & FLAG_HALF_CARRY) != 0);
+
+	if (add) // ADD, ADDC
+	{
+		if (!carry && !half_carry && (between(high, 0x0, 0x8) && between(low, 0xA, 0xF)))
+			reg_A += 0x06;
+
+		else if (!carry && half_carry && (between(high, 0x0, 0x9) && between(low, 0x0, 0x3)))
+			reg_A += 0x06;
+
+		else if (!carry && !half_carry && (between(high, 0xA, 0xF) && between(low, 0x0, 0x9)))
+		{
+			reg_A += 0x60;
+			set_flag(FLAG_CARRY, true);
+		}
+
+		else if (!carry && !half_carry && (between(high, 0x9, 0xF) && between(low, 0xA, 0xF)))
+		{
+			reg_A += 0x66;
+			set_flag(FLAG_CARRY, true);
+		}
+
+		else if (!carry && half_carry && (between(high, 0xA, 0xF) && between(low, 0x0, 0x3)))
+		{
+			reg_A += 0x66;
+			set_flag(FLAG_CARRY, true);
+		}
+
+		else if (carry && !half_carry && (between(high, 0x0, 0x2) && between(low, 0x0, 0x9)))
+			reg_A += 0x60;
+
+		else if (carry && !half_carry && (between(high, 0x0, 0x2) && between(low, 0xA, 0xF)))
+			reg_A += 0x66;
+
+		else if (carry && half_carry && (between(high, 0x0, 0x3) && between(low, 0x0, 0x3)))
+			reg_A += 0x66;
+	}
+	else // SUB, SUBC
+	{
+		if (!carry && half_carry && (between(high, 0x0, 0x8) && between(low, 0x6, 0xF)))
+			reg_A += 0xFA;
+
+		else if (carry && !half_carry && (between(high, 0x7, 0xF) && between(low, 0x0, 0x9)))
+			reg_A += 0xA0;
+
+		else if (carry && half_carry && (between(high, 0x6, 0xF) && between(low, 0x6, 0xF)))
+			reg_A += 0x9A;
+	}
+}
+
+void CPU::CPL()
+{
+	reg_A = ~reg_A;
+	set_flag(FLAG_HALF_CARRY, true);
+	set_flag(FLAG_SUB, true);
+}
+
+void CPU::NOP()
+{
+	reg_PC++; // Hardest operation ever
+}
+
+void CPU::HALT()
+{
+	// System clock stopped, HALT mode is entered
+	// Oscillator circuit and LCD controller continue to operate
+	// RAM unchanged
+
+	// HALT mode canceled by interrupt or reset signal
+
+
+}
+
+void CPU::STOP()
+{
+
+}
+
 void CPU::debug()
 {
-	reg_PC = 0x8000;
-	reg_SP = 0xFFFE;
-	parse_opcode(0xCD);
+	reg_A = 0x35;
 
-	parse_opcode(0xC9);
+	// CPL
+	parse_opcode(0x2F);
 
 	Byte b1 = memory.read(0xFFFD); // 0x80 or 128
 	Byte b2 = memory.read(0xFFFC); // 0x03 or 3

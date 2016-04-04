@@ -154,4 +154,19 @@ class CPU
 		void CALLC(Byte low, Byte high);
 
 		void RET();
+		void RETI(); // UNIMPLEMENTED
+		void RETNZ();
+		void RETZ();
+		void RETNC();
+		void RETC();
+
+		// Miscellaneous Instructions
+		void RST(Address addr);
+		
+		void DAA();
+		void CPL();
+		void NOP();
+
+		void HALT();
+		void STOP();
 };
