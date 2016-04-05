@@ -3,6 +3,7 @@
 #include "types.h"
 #include "memory.h"
 
+// Register pair helper class
 class Pair
 {
 	private:
@@ -24,37 +25,46 @@ class Pair
 // Gameboy CPU: 8-bit (Similar to the Z80 processor)
 class CPU
 {
-	public: 
-		CPU();
+	public:
+
+		CPU(Memory& memory_)
+			: memory(memory_) {
+			init(); 
+		};
+
 		void debug();
+		void execute(int cycles);
 
 	private:
-		Byte reg_A;
+
+		Memory& memory;
+
+		Byte reg_A; // Accumulator
 		Byte reg_B;
 		Byte reg_C;
 		Byte reg_D;
 		Byte reg_E;
 		Byte reg_H;
 		Byte reg_L;
-		Byte reg_F;
+		Byte reg_F; // Flag Register
 		Byte_2 reg_SP; // Stack Pointer
 		Byte_2 reg_PC; // Program Counter
+
+		int cycles = 0;
 
 		const int FLAG_ZERO       = 0b10000000;
 		const int FLAG_SUB        = 0b01000000;
 		const int FLAG_HALF_CARRY = 0b00100000;
 		const int FLAG_CARRY      = 0b00010000;
 
-		Memory memory;
-
 		void init();
 		void reset();
-		void execute(int cycles);
 		void interrupt_signal();
 		void stop();
 		void parse_opcode(Opcode code);
 		void parse_bit_op(Opcode code);
 		void set_flag(int flag, bool value);
+		void op(int pc, int cycle);
 
 		// 8-bit loads
 		void LD(Byte& destination, Byte value);

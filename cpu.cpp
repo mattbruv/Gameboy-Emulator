@@ -75,15 +75,11 @@ Address Pair::address()
 	Gameboy CPU Class
 	Modified Zilog Z80
 */
-CPU::CPU()
-{
-	init();
-}
 
 // Initialize CPU internal data structures
 void CPU::init()
 {
-	// Program Counter is initialized to $100
+	// Program Counter is initialized to 0x150
 	// Stack Pointer is initialized to $FFFE
 
 	// set meaningless register values for opcode debugging
@@ -96,7 +92,7 @@ void CPU::init()
 	reg_H = 0;
 	reg_L = 0;
 	reg_SP = 0xFFFE;
-	reg_PC = 0x100;
+	reg_PC = 0x150;
 }
 
 // Reproduces the effect of a reset signal sent to the CPU
@@ -105,8 +101,13 @@ void CPU::reset()
 }
 
 // Start emulation of CPU
-void CPU::execute(int cycles)
+void CPU::execute(int num_cycles)
 {
+	for (int i = 0; i < num_cycles; i++)
+	{
+		Opcode code = memory.read(reg_PC);
+		parse_opcode(code);
+	}
 }
 
 void CPU::interrupt_signal()
@@ -123,6 +124,12 @@ void CPU::set_flag(int flag, bool value)
 		reg_F |= flag;
 	else
 		reg_F &= ~(flag);
+}
+
+void CPU::op(int pc, int cycle)
+{
+	reg_PC += pc;
+	cycles += cycle;
 }
 
 // 8-bit loads
@@ -157,14 +164,15 @@ void CPU::LD(Byte_2& reg_pair, Byte upper, Byte lower)
 void CPU::LDHL(Byte value)
 {
 	// value = -128 to + 127, could this mean that we make this signed and then add?
-	int result = reg_SP + value;
+	Byte_Signed signed_val = (Byte_Signed) value;
+	int result = reg_SP + signed_val;
 
 	set_flag(FLAG_ZERO, false); // reset
 	set_flag(FLAG_SUB, false); // reset
-	set_flag(FLAG_HALF_CARRY, ((((reg_SP & 0xFFF) + (value & 0xFFF)) & 0x1000) != 0)); // set if carry from bit 11
+	set_flag(FLAG_HALF_CARRY, ((((reg_SP & 0xFFF) + (signed_val & 0xFFF)) & 0x1000) != 0)); // set if carry from bit 11
 	set_flag(FLAG_CARRY, (result > 0xFFFF)); // set if carry from bit 15
 
-	Pair(reg_H, reg_L).set(reg_SP + value);
+	Pair(reg_H, reg_L).set(reg_SP + signed_val);
 }
 
 void CPU::LDNN(Byte low, Byte high)
@@ -539,76 +547,62 @@ void CPU::RES(Address addr, int bit)
 void CPU::JP(Pair target)
 {
 	reg_PC = target.address();
+	op(0, 1); // Add 1 cycle when conditions are true
 }
 
 void CPU::JPNZ(Pair target)
 {
 	if ((reg_F & FLAG_ZERO) == 0)
 		JP(target);
-	else
-		reg_PC++;
 }
 
 void CPU::JPZ(Pair target)
 {
 	if ((reg_F & FLAG_ZERO) != 0)
 		JP(target);
-	else
-		reg_PC++;
 }
 
 void CPU::JPNC(Pair target)
 {
 	if ((reg_F & FLAG_CARRY) == 0)
 		JP(target);
-	else
-		reg_PC++;
 }
 
 void CPU::JPC(Pair target)
 {
 	if ((reg_F & FLAG_CARRY) != 0)
 		JP(target);
-	else
-		reg_PC++;
 }
 
 // Jumps -127 to +129 steps from current address
 void CPU::JR(Byte value)
 {
 	reg_PC += (Byte_Signed)(value - 2);
+	op(0, 1); // Add 1 cycle when conditions are true
 }
 
 void CPU::JRNZ(Byte value)
 {
 	if ((reg_F & FLAG_ZERO) == 0)
 		JR(value);
-	else
-		reg_PC++;
 }
 
 void CPU::JRZ(Byte value)
 {
 	if ((reg_F & FLAG_ZERO) != 0)
 		JR(value);
-	else
-		reg_PC++;
 }
 
 void CPU::JRNC(Byte value)
 {
 	if ((reg_F & FLAG_CARRY) == 0)
 		JR(value);
-	else
-		reg_PC++;
 }
 
 void CPU::JRC(Byte value)
 {
 	if ((reg_F & FLAG_CARRY) != 0)
 		JR(value);
-	else
-		reg_PC++;
 }
 
 // Jump to address
@@ -620,44 +614,35 @@ void CPU::JPHL()
 // Function Instructions
 void CPU::CALL(Byte low, Byte high)
 {
-	reg_PC += 3; // 3 byte instruction, so the PC is incremented by 3 before pushing to stack
-
 	memory.write(--reg_SP, high_byte(reg_PC));
 	memory.write(--reg_SP, low_byte(reg_PC));
 
 	JP(Pair(high, low));
+	op(0, 3);
 }
 
 void CPU::CALLNZ(Byte low, Byte high)
 {
 	if ((reg_F & FLAG_ZERO) == 0)
 		CALL(low, high);
-	else
-		reg_PC += 3;
 }
 
 void CPU::CALLZ(Byte low, Byte high)
 {
 	if ((reg_F & FLAG_ZERO) != 0)
 		CALL(low, high);
-	else
-		reg_PC += 3;
 }
 
 void CPU::CALLNC(Byte low, Byte high)
 {
 	if ((reg_F & FLAG_CARRY) == 0)
 		CALL(low, high);
-	else
-		reg_PC += 3;
 }
 
 void CPU::CALLC(Byte low, Byte high)
 {
 	if ((reg_F & FLAG_CARRY) != 0)
 		CALL(low, high);
-	else
-		reg_PC += 3;
 }
 
 void CPU::RET()
@@ -666,6 +651,7 @@ void CPU::RET()
 	Byte high = memory.read(reg_SP++);
 
 	reg_PC = Pair(high, low).get();
+	op(0, 3);
 }
 
 void CPU::RETI() // UNIMPLEMENTED
@@ -678,38 +664,28 @@ void CPU::RETNZ()
 {
 	if ((reg_F & FLAG_ZERO) == 0)
 		RET();
-	else
-		reg_PC += 3;
 }
 
 void CPU::RETZ()
 {
 	if ((reg_F & FLAG_ZERO) != 0)
 		RET();
-	else
-		reg_PC += 3;
 }
 
 void CPU::RETNC()
 {
 	if ((reg_F & FLAG_CARRY) == 0)
 		RET();
-	else
-		reg_PC += 3;
 }
 
 void CPU::RETC()
 {
 	if ((reg_F & FLAG_CARRY) != 0)
 		RET();
-	else
-		reg_PC += 3;
 }
 
 void CPU::RST(Address addr)
 {
-	reg_PC++; // 1 byte instruction
-
 	memory.write(--reg_SP, high_byte(reg_PC));
 	memory.write(--reg_SP, low_byte(reg_PC));
 
@@ -774,6 +750,8 @@ void CPU::DAA()
 		else if (carry && half_carry && (between(high, 0x6, 0xF) && between(low, 0x6, 0xF)))
 			reg_A += 0x9A;
 	}
+
+	set_flag(FLAG_HALF_CARRY, false); // Questionable
 }
 
 void CPU::CPL()
@@ -785,7 +763,7 @@ void CPU::CPL()
 
 void CPU::NOP()
 {
-	reg_PC++; // Hardest operation ever
+	// Hardest operation ever
 }
 
 void CPU::HALT()
@@ -795,8 +773,6 @@ void CPU::HALT()
 	// RAM unchanged
 
 	// HALT mode canceled by interrupt or reset signal
-
-
 }
 
 void CPU::STOP()
@@ -806,12 +782,6 @@ void CPU::STOP()
 
 void CPU::debug()
 {
-	reg_A = 0x35;
-
-	// CPL
-	parse_opcode(0x2F);
-
-	Byte b1 = memory.read(0xFFFD); // 0x80 or 128
-	Byte b2 = memory.read(0xFFFC); // 0x03 or 3
-	// Stack pointer should be 0xFFFC or 65532
+	reg_SP = 0xFFF8;
+	parse_opcode(0xF8);
 }
