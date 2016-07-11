@@ -29,5 +29,8 @@ void Memory::write(Address location, Byte data)
 
 Byte Memory::read(Address location)
 {
+	if (location > 0xFFFF)
+		return 0;
+
 	return MemoryMap[location];
 }

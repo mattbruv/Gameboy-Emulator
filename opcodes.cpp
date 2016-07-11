@@ -274,8 +274,8 @@ void CPU::parse_bit_op(Opcode code)
 
 void CPU::parse_opcode(Opcode code)
 {
-	Byte value = 0x13;
-	Byte value2 = 0x12;
+	Byte value  = memory.read(reg_PC + 1);
+	Byte value2 = memory.read(reg_PC + 2);
 
 	// REG_D could possibly be incorrect, assumed current value from manual to match GBCPUman
 	switch (code)
@@ -539,9 +539,15 @@ void CPU::parse_opcode(Opcode code)
 		case 0x27: DAA(); op(1, 1); break;
 		case 0x2F: CPL(); op(1, 1); break;
 		case 0x00: NOP(); op(1, 1); break;
+
+		// GBCPUMAN
+		case 0xF3: DI(); op(1, 1); break; // Disable interrupts
+		case 0xFB: EI(); op(1, 1); break; // Enable interrupts
 		// 112
 		// case 0x76: HALT(); op(1, 1); break; // UNIMPLEMENTED
 		// case 0x10: STOP(); op(2, 1); break; // UNIMPLEMENTED
+
+		// case 0x37: SCF(); // GBCPUman says that this sets carry flag, resets N & H, Z not affected
 
 		default: op(1, 0); break;
 	}

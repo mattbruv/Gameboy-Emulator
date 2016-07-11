@@ -57,15 +57,35 @@ class CPU
 		const int FLAG_HALF_CARRY = 0b00100000;
 		const int FLAG_CARRY      = 0b00010000;
 
+		const int INTERRUPT_V_BLANKING       = 0b00000001;
+		const int INTERRUPT_LCDC             = 0b00000010;
+		const int INTERRUPT_TIMER_OVERFLOW   = 0b00000100;
+		const int INTERRUPT_SERIAL_IO_DONE   = 0b00001000;
+		const int INTERRUPT_P10_P13_LOW      = 0b00010000;
+
+		const Address INT_CALL_V_BLANKING     = 0x0040;
+		const Address INT_CALL_LCDC           = 0x0048; // Mode can be selected by STAT register
+		const Address INT_CALL_TIMER_OVERFLOW = 0x0050;
+		const Address INT_CALL_SERIAL_IO_DONE = 0x0058;
+		const Address INT_CALL_P10_P13_LOW    = 0x0060;
+
+		// 0 - Reset by DI instruction; prohibits all interrupts, 1: set by EI instruction, The interrupt set by IE registers are enabled
+		bool interrupt_master_enable = false;
+
 		void init();
 		void reset();
 		void interrupt_signal();
+		void process_interrupt();
 		void stop();
+
 		void parse_opcode(Opcode code);
 		void parse_bit_op(Opcode code);
+
 		void set_flag(int flag, bool value);
 		void op(int pc, int cycle);
 
+		/***** CPU INSTRUCTIONS *****/
+		
 		// 8-bit loads
 		void LD(Byte& destination, Byte value);
 		void LD(Byte& destination, Address addr);
@@ -179,4 +199,8 @@ class CPU
 
 		void HALT();
 		void STOP();
+
+		// GBCPUMan
+		void DI();
+		void EI();
 };

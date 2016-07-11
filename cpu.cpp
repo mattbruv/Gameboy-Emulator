@@ -92,7 +92,12 @@ void CPU::init()
 	reg_H = 0;
 	reg_L = 0;
 	reg_SP = 0xFFFE;
-	reg_PC = 0x150;
+	reg_PC = 0x100;
+
+	Pair(reg_A, reg_F).set(0x01B0);
+	Pair(reg_B, reg_C).set(0x0013);
+	Pair(reg_D, reg_E).set(0x00D8);
+	Pair(reg_H, reg_L).set(0x014D);
 }
 
 // Reproduces the effect of a reset signal sent to the CPU
@@ -105,6 +110,10 @@ void CPU::execute(int num_cycles)
 {
 	for (int i = 0; i < num_cycles; i++)
 	{
+		if (reg_PC == 1)
+		{
+			int breakpoint = 0;
+		}
 		Opcode code = memory.read(reg_PC);
 		parse_opcode(code);
 	}
@@ -112,6 +121,55 @@ void CPU::execute(int num_cycles)
 
 void CPU::interrupt_signal()
 {
+}
+
+void CPU::process_interrupt()
+{
+	// Interrupt Flags
+
+	// 1. IF located at 0xFF0F
+			// Indicates which type of interrupt is set
+			// LCD Display Vertical Blanking
+			// Status Interrupts from LCDC
+			// Timer Overflow Interrupt
+			// Serial Transfer Completion Interrupt
+			// End of Input signals for ports P10-P13
+
+	// 2. IE located at 0xFFFF
+			// Used to control interrupts
+
+
+	// When multiple interrupts occur simultaneously, the IE flag of each is set, but only that with the highest priority is started.
+
+	// The interrupt process is as follows :
+			// 1 When an interrupt is processed, the corresponding IF flag is set.
+			// 2 Interrupt enabled.
+			// If the IME flag(Interrupt Master Enable) and the corresponding IE flag are set, the
+			// interrupt is performed by the following steps.
+			// 3 The IME flag is reset, and all interrupts are prohibited.
+			// 4 The contents of the PC(program counter) are pushed onto the stack RAM.
+			// 5 Control jumps to the interrupt starting address of the interrupt.
+
+	/*
+		The resetting of the IF register that initiates the interrupt is a hardware reset.
+
+		The interrupt processing routine should push the registers during interrupt processing.
+
+		When an interrupt begins, all other interrupts are prohibited, but processing of the highest level interrupt
+		is enabled by controlling the IME and IE flags with instructions.
+
+		Return from the interrupt routine is performed by the RET1 and RET instructions.
+
+		If the RETI instruction is used for the return, the IME flag is automatically set even if a DI instruction is
+		executed in the interrupt processing routine.
+
+		IF the RET instruction is used for the return, the IME flag remains reset unless an EI instruction is
+		executed in the interrupt routine.
+
+		Each interrupt request flag of the IF register can be individually tested using instructions.
+
+		Interrupts are accepted during the op code fetch cycle of each instruction.
+	*/
 }
 
 void CPU::stop()
@@ -777,7 +835,16 @@ void CPU::HALT()
 
 void CPU::STOP()
 {
+}
 
+void CPU::DI()
+{
+	interrupt_master_enable = false;
+}
+
+void CPU::EI()
+{
+	interrupt_master_enable = true;
 }
 
 void CPU::debug()
