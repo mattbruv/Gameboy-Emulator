@@ -93,11 +93,6 @@ void CPU::init()
 	reg_L = 0;
 	reg_SP = 0xFFFE;
 	reg_PC = 0x100;
-
-	Pair(reg_A, reg_F).set(0x01B0);
-	Pair(reg_B, reg_C).set(0x0013);
-	Pair(reg_D, reg_E).set(0x00D8);
-	Pair(reg_H, reg_L).set(0x014D);
 }
 
 // Reproduces the effect of a reset signal sent to the CPU
@@ -110,9 +105,8 @@ void CPU::execute(int num_cycles)
 {
 	for (int i = 0; i < num_cycles; i++)
 	{
-		if (reg_PC == 1)
-		{
-			int breakpoint = 0;
+		if (i == 10) {
+			bool point = true;
 		}
 		Opcode code = memory.read(reg_PC);
 		parse_opcode(code);
@@ -635,7 +629,8 @@ void CPU::JPC(Pair target)
 // Jumps -127 to +129 steps from current address
 void CPU::JR(Byte value)
 {
-	reg_PC += (Byte_Signed)(value - 2);
+	Byte_Signed signed_val = ((Byte_Signed)(value));
+	reg_PC += signed_val; // no reason for subtracting 2, but listed in docs
 	op(0, 1); // Add 1 cycle when conditions are true
 }
 

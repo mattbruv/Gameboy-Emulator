@@ -501,18 +501,18 @@ void CPU::parse_opcode(Opcode code)
 		// 99 - 104
 		case 0xCB: parse_bit_op(value); break;
 		// 105
-		case 0xC3: JP(Pair(value2, value));   op(3, 3); break; // 1 cycle added in JP();
-		case 0xC2: JPNZ(Pair(value2, value)); op(3, 3); break;
-		case 0xCA: JPZ(Pair(value2, value));  op(3, 3); break;
-		case 0xD2: JPNC(Pair(value2, value)); op(3, 3); break;
-		case 0xDA: JPC(Pair(value2, value));  op(3, 3); break;
+		case 0xC3: op(3, 3); JP(Pair(value2, value));   break; // 1 cycle added in JP();
+		case 0xC2: op(3, 3); JPNZ(Pair(value2, value)); break;
+		case 0xCA: op(3, 3); JPZ(Pair(value2, value));  break;
+		case 0xD2: op(3, 3); JPNC(Pair(value2, value)); break;
+		case 0xDA: op(3, 3); JPC(Pair(value2, value));  break;
 		// 106
-		case 0x18: JR(value);   op(2, 2); break; // 1 cycle added in JR();
-		case 0x20: JRNZ(value); op(2, 2); break;
-		case 0x28: JRZ(value);  op(2, 2); break;
-		case 0x30: JRNC(value); op(2, 2); break;
-		case 0x38: JRC(value);  op(2, 2); break;
-		case 0xE9: JPHL(); op(1, 1); break;
+		case 0x18: op(2, 2); JR(value); break; // 1 cycle added in JR();
+		case 0x20: op(2, 2); JRNZ(value); break;
+		case 0x28: op(2, 2); JRZ(value); break;
+		case 0x30: op(2, 2); JRNC(value); break;
+		case 0x38: op(2, 2); JRC(value); break;
+		case 0xE9: op(1, 1); JPHL(); break;
 		// 107
 		case 0xCD: op(3, 3); CALL(value, value2); break; // 3 cycles added in CALL();
 		case 0xC4: op(3, 3); CALLNZ(value, value2); break; // op() must be called before CALL() because it relies on updated PC

@@ -1,7 +1,13 @@
 #include "cpu.h"
+#include "display.h"
 
-int main()
+int main(int argc, char *args[])
 {
+	//Display window;
+	//window.init();
+
+	//return 0;
+	
 	Memory ram;
 	ram.load_rom("C:\\Users\\Matt\\Desktop\\GameBoy Emulator Project\\tetris.gb");
 
@@ -9,5 +15,7 @@ int main()
 
 	cpu.execute(0xFFFFF);
 
-	//cpu.debug();
+	return 0;
+	
+	/*cpu.debug(); */
 }

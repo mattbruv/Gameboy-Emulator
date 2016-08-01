@@ -1,9 +1,10 @@
 #pragma once
 
-#include <stdlib.h>
+#include "SDL.h"
+#include <iostream>
 
 class Display
 {
-	void run();
-	void display();
+	public:
+		void init();
 };
