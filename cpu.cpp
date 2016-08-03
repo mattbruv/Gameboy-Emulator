@@ -79,18 +79,26 @@ Address Pair::address()
 // Initialize CPU internal data structures
 void CPU::init()
 {
-	// Program Counter is initialized to 0x150
-	// Stack Pointer is initialized to $FFFE
+	/*
+		Gameboy Power Up Sequence:
+		* On startup, the gameboy runs a 256 byte ROM program which is physically located inside the gameboy, seperate from cartridges.
+		* It compares memory from cartridge 0x104 - 0x133 to internal memory to verify nintendo logo.
+			* Nintendo logo is scrolled to middle of screen and two musical notes play
+		* If any byte fails to compare, it stops comparing and halts all operations.	
 
-	// set meaningless register values for opcode debugging
-	reg_A = 0;
-	reg_B = 0;
-	reg_C = 0;
-	reg_D = 0;
-	reg_E = 0;
-	reg_F = 0;
-	reg_H = 0;
-	reg_L = 0;
+		* If all above checks pass, the internal ROM is disabled and the cartridge is excecuted at 0x100 with the following
+		ARBITRARY, UNEXPLAINED register values. 
+	*/
+
+
+	reg_A = 0x01;
+	reg_B = 0x00;
+	reg_C = 0x13;
+	reg_D = 0x00;
+	reg_E = 0xD8;
+	reg_F = 0xB0;
+	reg_H = 0x01;
+	reg_L = 0x4D;
 	reg_SP = 0xFFFE;
 	reg_PC = 0x100;
 }
@@ -105,10 +113,12 @@ void CPU::execute(int num_cycles)
 {
 	for (int i = 0; i < num_cycles; i++)
 	{
-		if (i == 10) {
-			bool point = true;
-		}
 		Opcode code = memory.read(reg_PC);
+
+		if (reg_PC == 0x2B8) {
+			bool breakpoint = true;
+		}
+
 		parse_opcode(code);
 	}
 }

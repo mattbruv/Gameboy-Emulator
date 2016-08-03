@@ -22,6 +22,20 @@ class Pair
 		Address address();
 };
 
+// Special register helper class
+// Special registers are each 1 byte of data starting from memory location 0xFF00 - 0xFFFF
+class SpecialRegister
+{
+	Address addr;
+
+	public:
+		SpecialRegister(Memory& memory_, Address addr_)
+			: memory(memory_) {};
+
+	private:
+		Memory& memory;
+};
+
 // Gameboy CPU: 8-bit (Similar to the Z80 processor)
 class CPU
 {
