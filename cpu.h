@@ -65,6 +65,10 @@ class CPU
 		Byte_2 reg_PC; // Program Counter
 
 		int cycles = 0;
+		
+		// 0 - Reset by DI instruction; prohibits all interrupts,
+		// 1 - Set by EI instruction, The interrupts set by IE registers are enabled
+		bool interrupt_master_enable = false;
 
 		const int FLAG_ZERO       = 0b10000000;
 		const int FLAG_SUB        = 0b01000000;
@@ -82,9 +86,6 @@ class CPU
 		const Address INT_CALL_TIMER_OVERFLOW = 0x0050;
 		const Address INT_CALL_SERIAL_IO_DONE = 0x0058;
 		const Address INT_CALL_P10_P13_LOW    = 0x0060;
-
-		// 0 - Reset by DI instruction; prohibits all interrupts, 1: set by EI instruction, The interrupt set by IE registers are enabled
-		bool interrupt_master_enable = false;
 
 		void init();
 		void reset();

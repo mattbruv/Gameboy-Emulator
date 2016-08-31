@@ -7,7 +7,7 @@ Memory::Memory()
 		MemoryMap[i] = 0;// rand() % 0xFF;
 	}
 
-	// The following memory locations are set to these arbitrary values on gameboy power up
+	// The following memory locations are set to the following arbitrary values on gameboy power up
 	write(0xFF05, 0x00); // TIMA
 	write(0xFF06, 0x00); // TMA
 	write(0xFF07, 0x00); // TAC

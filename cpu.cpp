@@ -89,8 +89,6 @@ void CPU::init()
 		* If all above checks pass, the internal ROM is disabled and the cartridge is excecuted at 0x100 with the following
 		ARBITRARY, UNEXPLAINED register values. 
 	*/
-
-
 	reg_A = 0x01;
 	reg_B = 0x00;
 	reg_C = 0x13;
@@ -108,6 +106,24 @@ void CPU::reset()
 {
 }
 
+/*
+	DEBUG:
+	Correctly matching register values with tetris BGB up to PC:
+	
+	0x029D
+
+	Current Goal:
+
+	The only really thing I need to do is have a class that manages special registers:
+	    - Reading/Writing certain bits easily within registers
+	    - (possibly) restrict writing/reading from unused bits in registers
+
+	Configure logic for interrupts/video/ special registers, UNDERSTAND each one and how it
+	is related to timings, etc. Do programs call vblank or does the gameboy?
+
+	Emulate CPU as much as I can match with BGB, discover problems/etc. along the way
+*/
+
 // Start emulation of CPU
 void CPU::execute(int num_cycles)
 {
@@ -115,7 +131,7 @@ void CPU::execute(int num_cycles)
 	{
 		Opcode code = memory.read(reg_PC);
 
-		if (reg_PC == 0x2B8) {
+		if (reg_PC == 0x29D) {
 			bool breakpoint = true;
 		}
 
