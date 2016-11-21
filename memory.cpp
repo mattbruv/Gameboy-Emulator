@@ -4,7 +4,7 @@ Memory::Memory()
 {
 	for (int i = 0; i < 0xFFFF; i++)
 	{
-		MemoryMap[i] = 0;// rand() % 0xFF;
+		MemoryMap[i] = 0; // rand() % 0xFF;
 	}
 
 	// The following memory locations are set to the following arbitrary values on gameboy power up
@@ -57,7 +57,16 @@ void Memory::load_rom(std::string location)
 void Memory::write(Address location, Byte data)
 {
 	// Use of the area from 0xE000 to 0xFDFF is prohibited
+	if (location >= 0xE000 && location <= 0xFDFF)
+		return;
+
 	MemoryMap[location] = data;
+
+	// Echo of 8kB internal RAM
+	// The addresses E000-FE00 access the internal RAM the same as C000-DE00
+	// If you write a byte to E000, it appears at C000 & E000 and vice versa
+	if (location >= 0xC000 && location <= 0xDE00)
+		MemoryMap[(location + 0x2000)] = data;
 }
 
 Byte Memory::read(Address location)

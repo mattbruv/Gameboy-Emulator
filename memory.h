@@ -51,14 +51,31 @@ class Memory
 
 			// Timer Registers - 25
 			TIMA = 0xFF05, // Timer Counter
-			TMA = 0xFF06, // Timer Modulo
-			TAC = 0xFF07, // Timer Controller
+			TMA  = 0xFF06, // Timer Modulo
+			TAC  = 0xFF07, // Timer Controller
 
 			// Interrupt Flags - 26
 			IF = 0xFF0F, // Interrupt Request
-			IE = 0xFFFF; // Interrupt Enable
+			IE = 0xFFFF, // Interrupt Enable
 			// IME or Interrupt Master Enable is defined in the CPU class
 
+			// LCD Display Registers
+			LCDC = 0xFF40,
+			STAT = 0xFF41,
+			SCY  = 0xFF42,
+			SCX  = 0xFF43,
+			LY   = 0xFF44,
+			LYC  = 0xFF45,
+			DMA  = 0xFF46,
+			BGP  = 0xFF47,
+			OBP0 = 0xFF48,
+			OBP1 = 0xFF49,
+			WY   = 0xFF4A,
+			WX   = 0xFF4B;
+
+			// OAM FE00 -> FE9F
+			// Sound Registers
+			// NR x x FF10 -> FF26 | Waveform RAM FF30 -> FF3F
 
 		Memory::Memory();
 		void load_rom(std::string location);

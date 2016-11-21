@@ -127,6 +127,9 @@ void CPU::reset()
 // Start emulation of CPU
 void CPU::execute(int num_cycles)
 {
+	/*
+		System operating frequency = 1.05 MHz = 1,050,000 cycles per second
+	*/
 	for (int i = 0; i < num_cycles; i++)
 	{
 		Opcode code = memory.read(reg_PC);
