@@ -106,8 +106,8 @@ Byte Memory::read(Address location)
 					return ZRAM[location & 0x7F];
 				else
 				{
+					return ZRAM[location & 0x7F]; // Liable to change
 					// TODO: I/O control handling
-					return 0;
 				}
 		}
 	}
@@ -182,8 +182,9 @@ void Memory::write(Address location, Byte data)
 			}
 			else
 			{
+				ZRAM[location & 0x7F] = data; // Liable to change
 				// TODO: I/O control handling
-				return; 
+				break; 
 			}
 		}
 	}
