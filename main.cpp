@@ -7,6 +7,7 @@ int main(int argc, char *args[])
 	ram.load_rom("C:\\Users\\Matt\\Desktop\\GameBoy Emulator Project\\tetris.gb");
 	CPU cpu(ram);
 
+	//ram.write(0xDEFF, 0x69);
 	cpu.execute(0xFFFFF);
 
 	return 0;
