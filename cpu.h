@@ -90,7 +90,7 @@ class CPU
 		void init();
 		void reset();
 		void interrupt_signal();
-		void process_interrupt();
+		void process_interrupts();
 		void stop();
 
 		void parse_opcode(Opcode code);

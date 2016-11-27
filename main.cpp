@@ -8,7 +8,7 @@ int main(int argc, char *args[])
 
 	CPU cpu(ram);
 
-	cpu.execute(0xFFFFF);
+	cpu.execute(0xFFFFFFF);
 
 	return 0;
 	
