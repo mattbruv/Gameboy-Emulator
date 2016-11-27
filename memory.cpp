@@ -1,45 +1,59 @@
 #include "memory.h"
 
+MemoryRegister::MemoryRegister() {}
+
+MemoryRegister::MemoryRegister(Byte *_data)
+{
+	value = _data;
+}
+
+Byte MemoryRegister::get()
+{
+	return *value;
+}
+
+void MemoryRegister::set(Byte data)
+{
+	*value = data;
+}
+
 Memory::Memory()
 {
 	WRAM = vector<Byte>(0x2000); // $C000 - $DFFF, 8kB Working RAM
 	ERAM = vector<Byte>(0x2000); // $A000 - $BFFF, 8kB switchable RAM bank, size liable to change in future
-	ZRAM = vector<Byte>(0x0080); // $FF80 - $FFFF, 128 bytes of RAM
+	ZRAM = vector<Byte>(0x0100); // $FF00 - $FFFF, 256 bytes of RAM
 	VRAM = vector<Byte>(0x2000); // $8000 - $9FFF, 8kB Video RAM
 	OAM  = vector<Byte>(0x00A0); // $FE00 - $FEA0, OAM Sprite RAM
-	
-	// The following memory locations are set to the following arbitrary values on gameboy power up
-	write(0xFF05, 0x00); // TIMA
-	write(0xFF06, 0x00); // TMA
-	write(0xFF07, 0x00); // TAC
-	write(0xFF10, 0x80); // NR10
-	write(0xFF11, 0xBF); // NR11
-	write(0xFF12, 0xF3); // NR12
-	write(0xFF14, 0xBF); // NR14
-	write(0xFF16, 0x3F); // NR21
-	write(0xFF17, 0x00); // NR22
-	write(0xFF19, 0xBF); // NR24
-	write(0xFF1A, 0x7F); // NR30
-	write(0xFF1B, 0xFF); // NR31
-	write(0xFF1C, 0x95); // NR32
-	write(0xFF1D, 0xBF); // NR33
-	write(0xFF20, 0xFF); // NR41
-	write(0xFF21, 0x00); // NR42
-	write(0xFF22, 0x00); // NR43
-	write(0xFF23, 0xBF); // NR30
-	write(0xFF24, 0x77); // NR50
-	write(0xFF25, 0xF3); // NR51
-	write(0xFF26, 0xF1); // $F0 - SUPERGB ; NR52
-	write(0xFF40, 0x91); // LCDC
-	write(0xFF42, 0x00); // SCY
-	write(0xFF43, 0x00); // SCX
-	write(0xFF45, 0x00); // LYC
-	write(0xFF47, 0xFC); // BGP
-	write(0xFF48, 0xFF); // 0BP0
-	write(0xFF49, 0xFF); // 0BP1
-	write(0xFF4A, 0x00); // WY
-	write(0xFF4B, 0x00); // WX
-	write(0xFFFF, 0x00); // IE
+
+	// Initialize Memory Register objects for easy reference
+	TIMA = MemoryRegister(&ZRAM[0x05]);
+	TMA  = MemoryRegister(&ZRAM[0x06]);
+	TAC  = MemoryRegister(&ZRAM[0x07]);
+	LCDC = MemoryRegister(&ZRAM[0x40]);
+	SCY  = MemoryRegister(&ZRAM[0x42]);
+	SCX  = MemoryRegister(&ZRAM[0x43]);
+	LYC  = MemoryRegister(&ZRAM[0x45]);
+	BGP  = MemoryRegister(&ZRAM[0x47]);
+	ZBP0 = MemoryRegister(&ZRAM[0x48]);
+	ZBP1 = MemoryRegister(&ZRAM[0x49]);
+	WY 	 = MemoryRegister(&ZRAM[0x4A]);
+	WX 	 = MemoryRegister(&ZRAM[0x4B]);
+	IE 	 = MemoryRegister(&ZRAM[0xFF]);
+
+	// The following memory locations are set to the following values after gameboy BIOS runs
+	TIMA.set(0x00);
+	TMA.set(0x00);
+	TAC.set(0x00);
+	LCDC.set(0x91);
+	SCY.set(0x00);
+	SCX.set(0x00);
+	LYC.set(0x00);
+	BGP.set(0xFC);
+	ZBP0.set(0xFF);
+	ZBP1.set(0xFF);
+	WY.set(0x00);
+	WX.set(0x00);
+	IE.set(0x00);
 }
 
 void Memory::load_rom(std::string location)
@@ -99,16 +113,10 @@ Byte Memory::read(Address location)
 				if (location < 0xFEA0)
 					return OAM[location & 0xFF];
 				else
-					return 0; // possibly return regular memory
+					return 0; // Empty but usable.. possibly return regular memory
 
 			case 0xF00:
-				if (location >= 0xFF80)
-					return ZRAM[location & 0x7F];
-				else
-				{
-					return ZRAM[location & 0x7F]; // Liable to change
-					// TODO: I/O control handling
-				}
+					return ZRAM[location & 0xFF];
 		}
 	}
 }
@@ -175,17 +183,8 @@ void Memory::write(Address location, Byte data)
 				return; // Write here?
 
 		case 0xF00:
-			if (location >= 0xFF80)
-			{
-				ZRAM[location & 0x7F] = data;
-				break;
-			}
-			else
-			{
-				ZRAM[location & 0x7F] = data; // Liable to change
-				// TODO: I/O control handling
-				break; 
-			}
+			ZRAM[location & 0xFF] = data;
+			break;
 		}
 	}
 }

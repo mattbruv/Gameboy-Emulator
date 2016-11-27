@@ -137,12 +137,6 @@ void CPU::execute(int num_cycles)
 		// Class with each for example LCDC = new MemReg()
 		// Where memreg is a class that has a few helper functions, and a pointer to memory location
 
-		Byte mem_lcdc = memory.read(memory.LCDC);
-		Byte mem_stat = memory.read(memory.STAT);
-		Byte mem_ly = memory.read(memory.LY);
-		Byte mem_ie = memory.read(memory.IE);
-		Byte mem_if = memory.read(memory.IF);
-
 		if (reg_PC == 0x29D) {// 0x282A) {
 			bool breakpoint = true;
 		}
