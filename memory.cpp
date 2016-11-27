@@ -2,11 +2,12 @@
 
 Memory::Memory()
 {
-	for (int i = 0; i < 0xFFFF; i++)
-	{
-		MemoryMap[i] = 0; // rand() % 0xFF;
-	}
-
+	WRAM = vector<Byte>(0x2000); // $C000 - $DFFF, 8kB Working RAM
+	ERAM = vector<Byte>(0x2000); // $A000 - $BFFF, 8kB switchable RAM bank, size liable to change in future
+	ZRAM = vector<Byte>(0x0080); // $FF80 - $FFFF, 128 bytes of RAM
+	VRAM = vector<Byte>(0x2000); // $8000 - $9FFF, 8kB Video RAM
+	/* BUG HERE -> */ OAM  = vector<Byte>(0x10A0); // $FE00 - $FEA0, OAM Sprite RAM // was 0x00A0
+	
 	// The following memory locations are set to the following arbitrary values on gameboy power up
 	write(0xFF05, 0x00); // TIMA
 	write(0xFF06, 0x00); // TMA
@@ -43,36 +44,135 @@ Memory::Memory()
 
 void Memory::load_rom(std::string location)
 {
-	std::ifstream input(location, std::ios::binary);
-	std::vector<unsigned char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
+	ifstream input(location, ios::binary);
+	vector<Byte> buffer((istreambuf_iterator<char>(input)), (istreambuf_iterator<char>()));
+	CART_ROM = buffer;
+}
 
-	int address = 0;
-
-	for (std::vector<unsigned char>::iterator it = buffer.begin(); it != buffer.end(); ++it)
+Byte Memory::read(Address location)
+{
+	switch (location & 0xF000)
 	{
-		write(address++, *it);
+		// ROM0
+		case 0x0000:
+		case 0x1000:
+		case 0x2000:
+		case 0x3000:
+			return CART_ROM[location];
+
+		// ROM1 (no bank switching)
+		case 0x4000:
+		case 0x5000:
+		case 0x6000:
+		case 0x7000:
+			return CART_ROM[location];
+
+		// Graphics VRAM
+		case 0x8000:
+		case 0x9000:
+			return VRAM[location & 0x1FFF];
+
+		// External RAM
+		case 0xA000:
+		case 0xB000:
+			return ERAM[location & 0x1FFF];
+
+		// Working RAM (8kB) and RAM Shadow
+		case 0xC000:
+		case 0xD000:
+		case 0xE000:
+			return WRAM[location & 0x1FFF];
+
+		// Remaining Working RAM Shadow, I/O, Zero page RAM
+		case 0xF000:
+			switch (location & 0x0F00)
+			{
+				// Remaining Working RAM
+				case 0x000: case 0x100: case 0x200: case 0x300:
+				case 0x400: case 0x500: case 0x600: case 0x700:
+				case 0x800: case 0x900: case 0xA00: case 0xB00:
+				case 0xC00: case 0xD00:
+					return WRAM[location & 0x1FFF];
+
+				// Sprite OAM
+				case 0xE00:
+					if (location < 0xFEA0)
+						return OAM[location & 0xFF];
+					else
+						return 0; // possibly return regular memory
+
+				case 0xF00:
+					if (location >= 0xFF80)
+						return ZRAM[location & 0x7F];
+					else
+					{
+						// TODO: I/O control handling
+						return 0;
+					}
+			}
 	}
 }
 
 void Memory::write(Address location, Byte data)
 {
-	// Use of the area from 0xE000 to 0xFDFF is prohibited
-	if (location >= 0xE000 && location <= 0xFDFF)
-		return;
+	switch (location & 0xF000)
+	{
+		// ROM0
+	case 0x0000:
+	case 0x1000:
+	case 0x2000:
+	case 0x3000:
+		CART_ROM[location] = data;
 
-	MemoryMap[location] = data;
+		// ROM1 (no bank switching)
+	case 0x4000:
+	case 0x5000:
+	case 0x6000:
+	case 0x7000:
+		CART_ROM[location] = data;
 
-	// Echo of 8kB internal RAM
-	// The addresses E000-FE00 access the internal RAM the same as C000-DE00
-	// If you write a byte to E000, it appears at C000 & E000 and vice versa
-	if (location >= 0xC000 && location <= 0xDE00)
-		MemoryMap[(location + 0x2000)] = data;
-}
+		// Graphics VRAM
+	case 0x8000:
+	case 0x9000:
+		VRAM[location & 0x1FFF] = data;
 
-Byte Memory::read(Address location)
-{
-	if (location > 0xFFFF)
-		return 0;
+		// External RAM
+	case 0xA000:
+	case 0xB000:
+		ERAM[location & 0x1FFF] = data;
 
-	return MemoryMap[location];
+		// Working RAM (8kB) and RAM Shadow
+	case 0xC000:
+	case 0xD000:
+	case 0xE000:
+		WRAM[location & 0x1FFF] = data;
+
+		// Remaining Working RAM Shadow, I/O, Zero page RAM
+	case 0xF000:
+		switch (location & 0x0F00)
+		{
+			// Remaining Working RAM
+		case 0x000: case 0x100: case 0x200: case 0x300:
+		case 0x400: case 0x500: case 0x600: case 0x700:
+		case 0x800: case 0x900: case 0xA00: case 0xB00:
+		case 0xC00: case 0xD00:
+			WRAM[location & 0x1FFF] = data;
+
+			// Sprite OAM
+		case 0xE00:
+			if (location < 0xFEA0)
+				OAM[location & 0xFF] = data;
+			else
+				return; // Write here?
+
+		case 0xF00:
+			if (location >= 0xFF80)
+				ZRAM[location & 0x7F] = data;
+			else
+			{
+				// TODO: I/O control handling
+				return; 
+			}
+		}
+	}
 }

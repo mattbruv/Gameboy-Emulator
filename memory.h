@@ -11,8 +11,14 @@
 
 class Memory
 {
-	private:
-		Byte MemoryMap[0x10000];
+	private:		
+		// Memory Regions
+		vector<Byte> CART_ROM;	// $0000 - $7FFF, 32kB Cartridge (potentially dynamic)
+		vector<Byte> VRAM;		// $8000 - $9FFF, 8kB Video RAM
+		vector<Byte> OAM;		// $FE00 - $FEA0, OAM Sprite RAM
+		vector<Byte> ERAM;		// $A000 - $BFFF, 8kB Cartridge external switchable RAM bank
+		vector<Byte> WRAM;		// $C000 - $DFFF, 8kB Working RAM
+		vector<Byte> ZRAM;		// $FF80 - $FFFF, 128 bytes of RAM
 
 	public:
 
