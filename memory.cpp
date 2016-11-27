@@ -122,7 +122,7 @@ void Memory::write(Address location, Byte data)
 	case 0x1000:
 	case 0x2000:
 	case 0x3000:
-		CART_ROM[location] = data;
+		// CART_ROM[location] = data; - READ ONLY
 		break;
 
 	// ROM1 (no bank switching)
@@ -130,7 +130,7 @@ void Memory::write(Address location, Byte data)
 	case 0x5000:
 	case 0x6000:
 	case 0x7000:
-		CART_ROM[location] = data;
+		// CART_ROM[location] = data; - READ ONLY
 		break;
 
 	// Graphics VRAM
