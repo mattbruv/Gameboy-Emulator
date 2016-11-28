@@ -125,27 +125,111 @@ void CPU::reset()
 */
 
 // Start emulation of CPU
-void CPU::execute(int num_cycles)
+void CPU::execute(int total_iterations)
 {
-	/*
-		System operating frequency = 1.05 MHz = 1,050,000 cycles per second
-	*/
-	for (int i = 0; i < num_cycles; i++)
+	// frames per second
+	int framerate = 60;
+
+	// CPU cycles to emulate per frame draw
+	int cycles_per_frame = CLOCK_SPEED / framerate;
+
+	// Current cycle in frame
+	int current_cycle = 0;
+
+	for (int i = 0; i < total_iterations; i++)
 	{
-		Opcode code = memory.read(reg_PC);
+		while (current_cycle < cycles_per_frame)
+		{
+			Opcode code = memory.read(reg_PC);
+			
+			if (reg_PC == 0x29D) {// 0x282A) {
+				bool breakpoint = true;
+			}
 
-		// Class with each for example LCDC = new MemReg()
-		// Where memreg is a class that has a few helper functions, and a pointer to memory location
+			if (reg_PC == 0x2B6) {
+				bool breakpoint = true;
+			} /**/
 
-		if (reg_PC == 0x29D) {// 0x282A) {
-			bool breakpoint = true;
+			parse_opcode(code);
+			current_cycle += num_cycles;
+			update_timers(num_cycles);
+			num_cycles = 0;
 		}
+		// Render();
+	}
+}
 
-		if (reg_PC == 0x2B6) {
-			bool breakpoint = true;
+void CPU::update_divider(int cycles)
+{
+	divider_counter += cycles;
+
+	if (divider_counter >= 256) // 16384 Hz
+	{
+		divider_counter = 0;
+		memory.DIV.set(memory.DIV.get() + 1);
+	}
+}
+
+// Opcode cycle number may need adjusted, used Nintendo values
+void CPU::update_timers(int cycles)
+{
+	update_divider(cycles);
+
+	// This can be optimized if needed
+	Byte new_freq = get_timer_frequency();
+
+	if (timer_frequency != new_freq)
+	{
+		set_timer_frequency();
+		timer_frequency = new_freq;
+	}
+
+	if (timer_enabled())
+	{
+		timer_counter -= cycles;
+
+		// enough cpu clock cycles have happened to update timer
+		if (timer_counter <= 0)
+		{
+			Byte timer_value = memory.TIMA.get();
+			set_timer_frequency();
+
+			// Timer will overflow, generate interrupt
+			if (timer_value == 255)
+			{
+				memory.TIMA.set(memory.TMA.get());
+				// request_interrupt(2);
+			}
+			else
+			{
+				memory.TIMA.set(timer_value + 1);
+			}
 		}
+	}
+}
 
-		parse_opcode(code);
+bool CPU::timer_enabled()
+{
+	return memory.TAC.is_bit_set(BIT_2);
+}
+
+Byte CPU::get_timer_frequency()
+{
+	return (memory.TAC.get() & 0x3);
+}
+
+void CPU::set_timer_frequency()
+{
+	Byte frequency = get_timer_frequency();
+	timer_frequency = frequency;
+
+	switch (frequency)
+	{
+		// timer_counter calculated by (Clock Speed / selected frequency)
+	case 0: timer_counter = 1024; break; // 4096 Hz
+	case 1: timer_counter = 16; break; // 262144 Hz
+	case 2: timer_counter = 64; break; // 65536 Hz
+	case 3: timer_counter = 256; break; // 16384 Hz
 	}
 }
 
@@ -155,51 +239,6 @@ void CPU::interrupt_signal()
 
 void CPU::process_interrupts()
 {
-	// Interrupt Flags
-
-	// 1. IF located at 0xFF0F
-			// Indicates which type of interrupt is set
-			// LCD Display Vertical Blanking
-			// Status Interrupts from LCDC
-			// Timer Overflow Interrupt
-			// Serial Transfer Completion Interrupt
-			// End of Input signals for ports P10-P13
-
-	// 2. IE located at 0xFFFF
-			// Used to control interrupts
-
-
-	// When multiple interrupts occur simultaneously, the IE flag of each is set, but only that with the highest priority is started.
-
-	// The interrupt process is as follows :
-			// 1 When an interrupt is processed, the corresponding IF flag is set.
-			// 2 Interrupt enabled.
-			// If the IME flag(Interrupt Master Enable) and the corresponding IE flag are set, the
-			// interrupt is performed by the following steps.
-			// 3 The IME flag is reset, and all interrupts are prohibited.
-			// 4 The contents of the PC(program counter) are pushed onto the stack RAM.
-			// 5 Control jumps to the interrupt starting address of the interrupt.
-
-	/*
-		The resetting of the IF register that initiates the interrupt is a hardware reset.
-
-		The interrupt processing routine should push the registers during interrupt processing.
-
-		When an interrupt begins, all other interrupts are prohibited, but processing of the highest level interrupt
-		is enabled by controlling the IME and IE flags with instructions.
-
-		Return from the interrupt routine is performed by the RET1 and RET instructions.
-
-		If the RETI instruction is used for the return, the IME flag is automatically set even if a DI instruction is
-		executed in the interrupt processing routine.
-
-		IF the RET instruction is used for the return, the IME flag remains reset unless an EI instruction is
-		executed in the interrupt routine.
-
-		Each interrupt request flag of the IF register can be individually tested using instructions.
-
-		Interrupts are accepted during the op code fetch cycle of each instruction.
-	*/
 }
 
 void CPU::stop()
@@ -217,7 +256,7 @@ void CPU::set_flag(int flag, bool value)
 void CPU::op(int pc, int cycle)
 {
 	reg_PC += pc;
-	cycles += cycle;
+	num_cycles += cycle;
 }
 
 // 8-bit loads

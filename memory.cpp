@@ -17,6 +17,11 @@ void MemoryRegister::set(Byte data)
 	*value = data;
 }
 
+bool MemoryRegister::is_bit_set(int bit)
+{
+	return (*value & bit) ? true : false;
+}
+
 Memory::Memory()
 {
 	WRAM = vector<Byte>(0x2000); // $C000 - $DFFF, 8kB Working RAM
@@ -26,6 +31,7 @@ Memory::Memory()
 	OAM  = vector<Byte>(0x00A0); // $FE00 - $FEA0, OAM Sprite RAM
 
 	// Initialize Memory Register objects for easy reference
+	DIV  = MemoryRegister(&ZRAM[0x04]);
 	TIMA = MemoryRegister(&ZRAM[0x05]);
 	TMA  = MemoryRegister(&ZRAM[0x06]);
 	TAC  = MemoryRegister(&ZRAM[0x07]);
@@ -36,9 +42,11 @@ Memory::Memory()
 	BGP  = MemoryRegister(&ZRAM[0x47]);
 	ZBP0 = MemoryRegister(&ZRAM[0x48]);
 	ZBP1 = MemoryRegister(&ZRAM[0x49]);
-	WY 	 = MemoryRegister(&ZRAM[0x4A]);
-	WX 	 = MemoryRegister(&ZRAM[0x4B]);
-	IE 	 = MemoryRegister(&ZRAM[0xFF]);
+	WY   = MemoryRegister(&ZRAM[0x4A]);
+	WX   = MemoryRegister(&ZRAM[0x4B]);
+	IE   = MemoryRegister(&ZRAM[0xFF]);
+
+	DIV.set(0x51);
 
 	// The following memory locations are set to the following values after gameboy BIOS runs
 	TIMA.set(0x00);
@@ -118,6 +126,8 @@ Byte Memory::read(Address location)
 			case 0xF00:
 					return ZRAM[location & 0xFF];
 		}
+	default:
+		return 0;
 	}
 }
 
@@ -183,8 +193,21 @@ void Memory::write(Address location, Byte data)
 				return; // Write here?
 
 		case 0xF00:
-			ZRAM[location & 0xFF] = data;
+			write_zero_page(location, data);
 			break;
 		}
+	}
+}
+
+void Memory::write_zero_page(Address location, Byte data)
+{
+	switch (location)
+	{
+	// Divider Register - Write as zero no matter content
+	case 0xFF04:
+		ZRAM[0x04] = 0;
+		break;
+	default:
+		ZRAM[location & 0xFF] = data;
 	}
 }

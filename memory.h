@@ -19,6 +19,7 @@ class MemoryRegister
 		MemoryRegister::MemoryRegister(Byte *_data);
 		Byte get();
 		void set(Byte data);
+		bool is_bit_set(int bit);
 };
 
 class Memory
@@ -35,22 +36,14 @@ class Memory
 	public:
 
 		MemoryRegister
-			TIMA, TMA, TAC,
+			DIV, TIMA, TMA, TAC,
 			LCDC, SCY, SCX, LYC, BGP, ZBP0, ZBP1, WY, WX, IE;
-
-		const int 
-			BIT_7 = 0b10000000,
-			BIT_6 = 0b01000000,
-			BIT_5 = 0b00100000,
-			BIT_4 = 0b00010000,
-			BIT_3 = 0b00001000,
-			BIT_2 = 0b00000100,
-			BIT_1 = 0b00000010,
-			BIT_0 = 0b00000001;
 
 		Memory::Memory();
 		void load_rom(std::string location);
 
-		void write(Address location, Byte data);
 		Byte read(Address location);
+
+		void write(Address location, Byte data);
+		void write_zero_page(Address location, Byte data);
 };

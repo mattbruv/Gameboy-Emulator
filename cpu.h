@@ -22,20 +22,6 @@ class Pair
 		Address address();
 };
 
-// Special register helper class
-// Special registers are each 1 byte of data starting from memory location 0xFF00 - 0xFFFF
-class SpecialRegister
-{
-	Address addr;
-
-	public:
-		SpecialRegister(Memory& memory_, Address addr_)
-			: memory(memory_) {};
-
-	private:
-		Memory& memory;
-};
-
 // Gameboy CPU: 8-bit (Similar to the Z80 processor)
 class CPU
 {
@@ -46,8 +32,10 @@ class CPU
 			init(); 
 		};
 
+		const int CLOCK_SPEED = 4194304; // 4194304 Hz CPU speed
+
 		void debug();
-		void execute(int cycles);
+		void execute(int total_iterations);
 
 	private:
 
@@ -64,31 +52,33 @@ class CPU
 		Byte_2 reg_SP; // Stack Pointer
 		Byte_2 reg_PC; // Program Counter
 
-		int cycles = 0;
+		int num_cycles = 0;
+		int timer_counter = 0;
+		Byte timer_frequency = 0;
+
+		int divider_counter = 0;
+		int divider_frequency = 16384; // 16384 Hz or every 256 CPU clock cycles
 		
 		// 0 - Reset by DI instruction; prohibits all interrupts,
 		// 1 - Set by EI instruction, The interrupts set by IE registers are enabled
 		bool interrupt_master_enable = false;
 
-		const int FLAG_ZERO       = 0b10000000;
-		const int FLAG_SUB        = 0b01000000;
-		const int FLAG_HALF_CARRY = 0b00100000;
-		const int FLAG_CARRY      = 0b00010000;
-
-		const int INTERRUPT_V_BLANKING       = 0b00000001;
-		const int INTERRUPT_LCDC             = 0b00000010;
-		const int INTERRUPT_TIMER_OVERFLOW   = 0b00000100;
-		const int INTERRUPT_SERIAL_IO_DONE   = 0b00001000;
-		const int INTERRUPT_P10_P13_LOW      = 0b00010000;
-
-		const Address INT_CALL_V_BLANKING     = 0x0040;
-		const Address INT_CALL_LCDC           = 0x0048; // Mode can be selected by STAT register
-		const Address INT_CALL_TIMER_OVERFLOW = 0x0050;
-		const Address INT_CALL_SERIAL_IO_DONE = 0x0058;
-		const Address INT_CALL_P10_P13_LOW    = 0x0060;
+		const int
+			FLAG_ZERO       = 0b10000000,
+			FLAG_SUB        = 0b01000000,
+			FLAG_HALF_CARRY = 0b00100000,
+			FLAG_CARRY      = 0b00010000;
 
 		void init();
 		void reset();
+
+		void update_divider(int cycles);
+		
+		void update_timers(int cycles);
+		bool timer_enabled();
+		Byte get_timer_frequency();
+		void set_timer_frequency();
+
 		void interrupt_signal();
 		void process_interrupts();
 		void stop();
