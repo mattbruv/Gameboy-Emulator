@@ -19,7 +19,9 @@ class MemoryRegister
 		MemoryRegister::MemoryRegister(Byte *_data);
 		Byte get();
 		void set(Byte data);
-		bool is_bit_set(int bit);
+		void set_bit(Byte bit);
+		void clear_bit(Byte bit);
+		bool is_bit_set(Byte bit);
 };
 
 class Memory
@@ -37,7 +39,8 @@ class Memory
 
 		MemoryRegister
 			DIV, TIMA, TMA, TAC,
-			LCDC, SCY, SCX, LYC, BGP, ZBP0, ZBP1, WY, WX, IE;
+			LCDC, SCY, SCX, LYC, BGP, ZBP0, ZBP1, WY, WX,
+			IF, IE;
 
 		Memory::Memory();
 		void load_rom(std::string location);

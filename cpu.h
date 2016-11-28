@@ -79,8 +79,10 @@ class CPU
 		Byte get_timer_frequency();
 		void set_timer_frequency();
 
-		void interrupt_signal();
-		void process_interrupts();
+		void request_interrupt(Byte id);
+		void do_interrupts();
+		void service_interrupt(Byte id);
+
 		void stop();
 
 		void parse_opcode(Opcode code);

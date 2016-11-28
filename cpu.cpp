@@ -106,24 +106,6 @@ void CPU::reset()
 {
 }
 
-/*
-	DEBUG:
-	Correctly matching register values with tetris BGB up to PC:
-	
-	0x029D
-
-	Current Goal:
-
-	The only really thing I need to do is have a class that manages special registers:
-	    - Reading/Writing certain bits easily within registers
-	    - (possibly) restrict writing/reading from unused bits in registers
-
-	Configure logic for interrupts/video/ special registers, UNDERSTAND each one and how it
-	is related to timings, etc. Do programs call vblank or does the gameboy?
-
-	Emulate CPU as much as I can match with BGB, discover problems/etc. along the way
-*/
-
 // Start emulation of CPU
 void CPU::execute(int total_iterations)
 {
@@ -198,7 +180,7 @@ void CPU::update_timers(int cycles)
 			if (timer_value == 255)
 			{
 				memory.TIMA.set(memory.TMA.get());
-				// request_interrupt(2);
+				request_interrupt(INTERRUPT_TIMER);
 			}
 			else
 			{
@@ -233,12 +215,49 @@ void CPU::set_timer_frequency()
 	}
 }
 
-void CPU::interrupt_signal()
+void CPU::request_interrupt(Byte id)
 {
+	memory.IF.set_bit(id);
 }
 
-void CPU::process_interrupts()
+void CPU::do_interrupts()
 {
+	// If master flag is enabled
+	if (interrupt_master_enable)
+	{
+		// If there are any interrupts set
+		if (memory.IF.get() > 0)
+		{
+			// Loop through each bit and call interrupt for lowest -> highest priority bits set
+			for (int i = 0; i < 5; i++)
+			{
+				if (memory.IF.is_bit_set(i))
+				{
+					if (memory.IE.is_bit_set(i))
+					{
+						service_interrupt(i);
+					}
+				}
+			}
+		}
+	}
+}
+
+void CPU::service_interrupt(Byte id)
+{
+	interrupt_master_enable = false;
+	memory.IF.clear_bit(id);
+
+	// Push current execution address to stack
+	PUSH(high_byte(reg_PC), low_byte(reg_PC));
+
+	switch (id)
+	{
+		case INTERRUPT_VBLANK: reg_PC = 0x40; break;
+		case INTERRUPT_LCDC:   reg_PC = 0x48; break;
+		case INTERRUPT_TIMER:  reg_PC = 0x50; break;
+		case INTERRUPT_JOYPAD: reg_PC = 0x60; break;
+	}
 }
 
 void CPU::stop()

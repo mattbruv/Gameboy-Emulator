@@ -17,9 +17,19 @@ void MemoryRegister::set(Byte data)
 	*value = data;
 }
 
-bool MemoryRegister::is_bit_set(int bit)
+void MemoryRegister::set_bit(Byte bit)
 {
-	return (*value & bit) ? true : false;
+	*value |= 1 << bit;
+}
+
+void MemoryRegister::clear_bit(Byte bit)
+{
+	*value &= ~(1 << bit);
+}
+
+bool MemoryRegister::is_bit_set(Byte bit)
+{
+	return ((*value >> bit) & 1) ? true : false;
 }
 
 Memory::Memory()
@@ -44,11 +54,11 @@ Memory::Memory()
 	ZBP1 = MemoryRegister(&ZRAM[0x49]);
 	WY   = MemoryRegister(&ZRAM[0x4A]);
 	WX   = MemoryRegister(&ZRAM[0x4B]);
+	IF   = MemoryRegister(&ZRAM[0x0F]);
 	IE   = MemoryRegister(&ZRAM[0xFF]);
 
-	DIV.set(0x51);
-
 	// The following memory locations are set to the following values after gameboy BIOS runs
+	DIV.set(0x00);
 	TIMA.set(0x00);
 	TMA.set(0x00);
 	TAC.set(0x00);
@@ -61,6 +71,7 @@ Memory::Memory()
 	ZBP1.set(0xFF);
 	WY.set(0x00);
 	WX.set(0x00);
+	IF.set(0x00);
 	IE.set(0x00);
 }
 
