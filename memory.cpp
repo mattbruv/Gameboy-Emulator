@@ -1,42 +1,5 @@
 #include "memory.h"
 
-MemoryRegister::MemoryRegister() {}
-
-MemoryRegister::MemoryRegister(Byte *_data)
-{
-	value = _data;
-}
-
-Byte MemoryRegister::get()
-{
-	return *value;
-}
-
-void MemoryRegister::set(Byte data)
-{
-	*value = data;
-}
-
-void MemoryRegister::clear()
-{
-	set(0x00);
-}
-
-void MemoryRegister::set_bit(Byte bit)
-{
-	*value |= 1 << bit;
-}
-
-void MemoryRegister::clear_bit(Byte bit)
-{
-	*value &= ~(1 << bit);
-}
-
-bool MemoryRegister::is_bit_set(Byte bit)
-{
-	return ((*value >> bit) & 1) ? true : false;
-}
-
 Memory::Memory()
 {
 	WRAM = vector<Byte>(0x2000); // $C000 - $DFFF, 8kB Working RAM
@@ -241,6 +204,9 @@ void Memory::write_zero_page(Address location, Byte data)
 	// LY Register - Game cannot write to this register directly 
 	case 0xFF44:
 		ZRAM[0x44] = 0;
+	// DMA transfer request
+	case 0xFF46:
+		do_dma_transfer();
 	default:
 		ZRAM[location & 0xFF] = data;
 	}

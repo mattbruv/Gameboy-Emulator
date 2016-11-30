@@ -1,110 +1,26 @@
 #include "cpu.h"
 
 /*
- *	Helper Functions
- */
-Byte high_byte(Byte_2 target)
-{
-	return (Byte)(target >> 8) & 0xFF;
-}
-
-Byte low_byte(Byte_2 target)
-{
-	return (Byte)target;
-}
-
-Byte high_nibble(Byte target)
-{
-	return ((target >> 4) & 0xF);
-}
-
-Byte low_nibble(Byte target)
-{
-	Byte test = (target & 0xF);
-	return (target & 0xF);
-}
-
-Byte_2 combine(Byte high, Byte low)
-{
-	return (high << 8 | low);
-}
-
-bool between(Byte target, int low, int high)
-{
-	return (target >= low && target <= high);
-}
-
-Byte set_bit(Byte data, Byte bit)
-{
-	return data | (1 << bit);
-}
-
-Byte clear_bit(Byte data, Byte bit)
-{
-	return data & (~(1 << bit));
-}
-
-bool is_bit_set(Byte data, Byte bit)
-{
-	return ((data >> bit) & 1) ? true : false;
-}
-
-/*
- *	8-Bit Pair Helper Class
- */
-void Pair::inc()
-{
-	Address addr = address() + 1;
-	set(addr);
-}
-
-void Pair::dec()
-{
-	Address addr = address() - 1;
-	set(addr);
-}
-
-void Pair::set(Byte_2 value)
-{
-	high = high_byte(value);
-	low = low_byte(value);
-}
-
-void Pair::set(Byte upper, Byte lower)
-{
-	high = upper;
-	low = lower;
-}
-
-Byte_2 Pair::get()
-{
-	return address();
-}
-
-Address Pair::address()
-{
-	return combine(high, low);
-}
-
-/*
 	Gameboy CPU Class
 	Modified Zilog Z80
 */
 
 // Initialize CPU internal data structures
-void CPU::init(Memory* _memory, Display* _display)
+void CPU::init(Memory* _memory)
 {
 	memory = _memory;
-	display = _display;
 	/*
 		Gameboy Power Up Sequence:
-		* On startup, the gameboy runs a 256 byte ROM program which is physically located inside the gameboy, seperate from cartridges.
+
+		* On startup, the gameboy runs a 256 byte ROM program which is physically located
+		inside the gameboy,seperate from cartridges.
+
 		* It compares memory from cartridge 0x104 - 0x133 to internal memory to verify nintendo logo.
 			* Nintendo logo is scrolled to middle of screen and two musical notes play
 		* If any byte fails to compare, it stops comparing and halts all operations.	
 
-		* If all above checks pass, the internal ROM is disabled and the cartridge is excecuted at 0x100 with the following
-		ARBITRARY, UNEXPLAINED register values. 
+		* If all above checks pass, the internal ROM is disabled and the cartridge is 
+		excecuted at 0x100 with the following register values. 
 	*/
 	reg_A = 0x01;
 	reg_B = 0x00;
@@ -119,279 +35,17 @@ void CPU::init(Memory* _memory, Display* _display)
 }
 
 // Reproduces the effect of a reset signal sent to the CPU
-void CPU::reset()
+void CPU::reset() {}
+void CPU::stop() {}
+
+void CPU::op(int pc, int cycle)
 {
-}
+	reg_PC += pc;
 
-// Start emulation of CPU
-void CPU::execute(int total_iterations)
-{
-	// frames per second
-	int framerate = 60;
-
-	// CPU cycles to emulate per frame draw
-	int cycles_per_frame = CLOCK_SPEED / framerate;
-
-	// Current cycle in frame
-	int current_cycle = 0;
-
-	for (int i = 0; i < total_iterations; i++)
-	{
-		while (current_cycle < cycles_per_frame)
-		{
-			Opcode code = memory->read(reg_PC);
-			
-			if (reg_PC == 0x282A) {
-				bool breakpoint = true;
-			}
-
-			if (reg_PC == 0x2B6) {
-				bool breakpoint = true;
-			}
-
-			parse_opcode(code);
-			current_cycle += num_cycles;
-			update_timers(num_cycles);
-			update_scanline(num_cycles);
-			do_interrupts();
-			num_cycles = 0;
-		}
-		// Render();
-		// Reset counter for next frame
-		current_cycle = 0;
-	}
-}
-
-void CPU::update_divider(int cycles)
-{
-	divider_counter += cycles;
-
-	if (divider_counter >= 256) // 16384 Hz
-	{
-		divider_counter = 0;
-		memory->DIV.set(memory->DIV.get() + 1);
-	}
-}
-
-// Opcode cycle number may need adjusted, used Nintendo values
-void CPU::update_timers(int cycles)
-{
-	update_divider(cycles);
-
-	// This can be optimized if needed
-	Byte new_freq = get_timer_frequency();
-
-	if (timer_frequency != new_freq)
-	{
-		set_timer_frequency();
-		timer_frequency = new_freq;
-	}
-
-	if (timer_enabled())
-	{
-		timer_counter -= cycles;
-
-		// enough cpu clock cycles have happened to update timer
-		if (timer_counter <= 0)
-		{
-			Byte timer_value = memory->TIMA.get();
-			set_timer_frequency();
-
-			// Timer will overflow, generate interrupt
-			if (timer_value == 255)
-			{
-				memory->TIMA.set(memory->TMA.get());
-				request_interrupt(INTERRUPT_TIMER);
-			}
-			else
-			{
-				memory->TIMA.set(timer_value + 1);
-			}
-		}
-	}
-}
-
-bool CPU::timer_enabled()
-{
-	return memory->TAC.is_bit_set(BIT_2);
-}
-
-Byte CPU::get_timer_frequency()
-{
-	return (memory->TAC.get() & 0x3);
-}
-
-void CPU::set_timer_frequency()
-{
-	Byte frequency = get_timer_frequency();
-	timer_frequency = frequency;
-
-	switch (frequency)
-	{
-		// timer_counter calculated by (Clock Speed / selected frequency)
-	case 0: timer_counter = 1024; break; // 4096 Hz
-	case 1: timer_counter = 16; break; // 262144 Hz
-	case 2: timer_counter = 64; break; // 65536 Hz
-	case 3: timer_counter = 256; break; // 16384 Hz
-	}
-}
-
-void CPU::request_interrupt(Byte id)
-{
-	memory->IF.set_bit(id);
-}
-
-void CPU::do_interrupts()
-{
-	// If master flag is enabled
-	if (interrupt_master_enable)
-	{
-		// If there are any interrupts set
-		if (memory->IF.get() > 0)
-		{
-			// Loop through each bit and call interrupt for lowest -> highest priority bits set
-			for (int i = 0; i < 5; i++)
-			{
-				if (memory->IF.is_bit_set(i))
-				{
-					if (memory->IE.is_bit_set(i))
-					{
-						service_interrupt(i);
-					}
-				}
-			}
-		}
-	}
-}
-
-void CPU::service_interrupt(Byte id)
-{
-	interrupt_master_enable = false;
-	memory->IF.clear_bit(id);
-
-	// Push current execution address to stack
-	PUSH(high_byte(reg_PC), low_byte(reg_PC));
-
-	switch (id)
-	{
-		case INTERRUPT_VBLANK: reg_PC = 0x40; break;
-		case INTERRUPT_LCDC:   reg_PC = 0x48; break;
-		case INTERRUPT_TIMER:  reg_PC = 0x50; break;
-		case INTERRUPT_JOYPAD: reg_PC = 0x60; break;
-	}
-}
-
-void CPU::set_lcd_status()
-{
-	Byte status = memory->STAT.get();
-
-	if (display->is_lcd_enabled() == false)
-	{
-		// Set mode to 1 during LCD disabled and reset scanline
-		scanline_counter = 456;
-		memory->LY.clear();
-		status &= 252;
-		status = set_bit(status, 0);
-		memory->STAT.set(status);
-		return;
-	}
-
-	Byte current_line = memory->LY.get();
-	// extract current LCD mode
-	Byte current_mode = status & 0x03;
-
-	Byte mode = 0;
-	bool do_interrupt = false;
-
-	// in VBLANK, set mode to 1
-	if (current_line >= 144)
-	{
-		mode = 1; // In vertical blanking period
-		// 1 binary
-		status = set_bit(status, BIT_0);
-		status = clear_bit(status, BIT_1);
-		do_interrupt = is_bit_set(status, BIT_4);
-
-	}
-	else
-	{
-		int mode2_threshold = 456 - 80;
-		int mode3_threshold = mode2_threshold - 172;
-
-		if (scanline_counter >= mode2_threshold)
-		{
-			mode = 2; // Searching OAM RAM
-			// 2 binary
-			status = set_bit(status, BIT_1);
-			status = clear_bit(status, BIT_0);
-			do_interrupt = is_bit_set(status, BIT_5);
-		}
-		else if (scanline_counter >= mode3_threshold)
-		{
-			mode = 3; // Transferring data to LCD driver
-			// 3 binary
-			status = set_bit(status, BIT_1);
-			status = set_bit(status, BIT_0);
-		}
-		else
-		{
-			mode = 0; // CPU has access to all display RAM
-			// 0 binary
-			status = clear_bit(status, BIT_1);
-			status = clear_bit(status, BIT_0);
-			do_interrupt = is_bit_set(status, BIT_3);
-		}
-	}
-
-	// Entered new mode, request interrupt
-	if (do_interrupt && (mode != current_mode))
-		request_interrupt(INTERRUPT_LCDC);
-
-	// check coincidence flag, set bit 2 if it matches
-	if (memory->LY.get() == memory->LYC.get())
-	{
-		status = set_bit(status, BIT_2);
-
-		if (is_bit_set(status, BIT_6))
-			request_interrupt(INTERRUPT_LCDC);
-	}
-	// clear bit 2 if not
-	else
-		status = clear_bit(status, BIT_2);
-
-	memory->STAT.set(status);
-}
-
-void CPU::update_scanline(int cycles)
-{
-	set_lcd_status();
-
-	if (display->is_lcd_enabled())
-		scanline_counter -= cycles;
-	else
-		return;
-
-	if (scanline_counter <= 0)
-	{
-		Byte current_scanline = memory->LY.get();
-		// increment scanline and reset counter
-		memory->LY.set(current_scanline + 1);
-		scanline_counter = 456;
-
-		// Entered VBLANK period
-		if (current_scanline == 144)
-			request_interrupt(0);
-		// Reset counter if past maximum
-		else if (current_scanline > 153)
-			memory->LY.clear();
-		// Draw the next scanline
-		else if (current_scanline < 144)
-			display->draw_scanline();
-	}
-}
-
-void CPU::stop()
-{
+	/* cycles are multiplied by 4 because I used programming manual opcode cycles
+	which were defined as machine cycles instead of clock cycles.
+	1 machine cycle is 1/4th of a clock cycle */
+	num_cycles += (cycle * 4);
 }
 
 void CPU::set_flag(int flag, bool value)
@@ -400,18 +54,6 @@ void CPU::set_flag(int flag, bool value)
 		reg_F |= flag;
 	else
 		reg_F &= ~(flag);
-}
-
-void CPU::op(int pc, int cycle)
-{
-	reg_PC += pc;
-
-	/*
-		cycles are multiplied by 4 because I used Nintendo manual opcode cycles
-		which were defined by machine cycles instead of clock cycles. 
-		1 clock cycle = 4 machine cycles
-	*/
-	num_cycles += (cycle * 4);
 }
 
 // 8-bit loads

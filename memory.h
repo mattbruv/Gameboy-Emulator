@@ -2,29 +2,6 @@
 
 #include "types.h"
 
-#include <fstream>
-#include <iterator>
-#include <algorithm>
-#include <string>
-#include <vector>
-#include <iostream>
-
-class MemoryRegister
-{
-	private:
-		Byte *value;
-
-	public:
-		MemoryRegister::MemoryRegister();
-		MemoryRegister::MemoryRegister(Byte *_data);
-		Byte get();
-		void set(Byte data);
-		void clear();
-		void set_bit(Byte bit);
-		void clear_bit(Byte bit);
-		bool is_bit_set(Byte bit);
-};
-
 class Memory
 {
 	private:		

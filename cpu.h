@@ -2,43 +2,11 @@
 
 #include "types.h"
 #include "memory.h"
-#include "display.h"
-
-// Register pair helper class
-class Pair
-{
-	private:
-		Byte& high;
-		Byte& low;
-
-	public:
-		Pair(Byte& high_, Byte& low_)
-			: high(high_), low(low_) {}
-		void inc();
-		void dec();
-		void set(Byte_2 value);
-		void set(Byte upper, Byte lower);
-		Byte_2 get();
-
-		Address address();
-};
 
 // Gameboy CPU: 8-bit (Similar to the Z80 processor)
 class CPU
 {
 	public:
-
-		const int CLOCK_SPEED = 4194304; // 4194304 Hz CPU speed
-
-		void init(Memory* _memory, Display* _display);
-		void debug();
-		void execute(int total_iterations);
-
-	private:
-
-		Memory* memory;
-		Display* display;
-
 		Byte reg_A; // Accumulator
 		Byte reg_B;
 		Byte reg_C;
@@ -50,18 +18,17 @@ class CPU
 		Byte_2 reg_SP; // Stack Pointer
 		Byte_2 reg_PC; // Program Counter
 
+		const int CLOCK_SPEED = 4194304; // 4194304 Hz CPU speed
 		int num_cycles = 0;
-		int timer_counter = 0; // this may need to be set to some calculated non zero value
-		Byte timer_frequency = 0;
-
-		int divider_counter = 0;
-		int divider_frequency = 16384; // 16384 Hz or every 256 CPU clock cycles
-
-		int scanline_counter = 456; // Clock cycles per scanline draw
-		
-		// 0 - Reset by DI instruction; prohibits all interrupts,
-		// 1 - Set by EI instruction, The interrupts set by IE registers are enabled
 		bool interrupt_master_enable = false;
+
+		void init(Memory* _memory);
+		void parse_opcode(Opcode code);
+		void debug();
+
+	private:
+
+		Memory* memory;
 
 		const int
 			FLAG_ZERO       = 0b10000000,
@@ -69,32 +36,14 @@ class CPU
 			FLAG_HALF_CARRY = 0b00100000,
 			FLAG_CARRY      = 0b00010000;
 
+		void op(int pc, int cycle);
+		void parse_bit_op(Opcode code);
+		void set_flag(int flag, bool value);
 		void reset();
-
-		void update_divider(int cycles);
-		
-		void update_timers(int cycles);
-		bool timer_enabled();
-		Byte get_timer_frequency();
-		void set_timer_frequency();
-
-		void request_interrupt(Byte id);
-		void do_interrupts();
-		void service_interrupt(Byte id);
-
-		void set_lcd_status();
-		void update_scanline(int cycles);
-
 		void stop();
 
-		void parse_opcode(Opcode code);
-		void parse_bit_op(Opcode code);
+		// ---------- CPU INSTRUCTIONS ---------- //
 
-		void set_flag(int flag, bool value);
-		void op(int pc, int cycle);
-
-		/***** CPU INSTRUCTIONS *****/
-		
 		// 8-bit loads
 		void LD(Byte& destination, Byte value);
 		void LD(Byte& destination, Address addr);
