@@ -34,6 +34,21 @@ bool between(Byte target, int low, int high)
 	return (target >= low && target <= high);
 }
 
+Byte set_bit(Byte data, Byte bit)
+{
+	return data | (1 << bit);
+}
+
+Byte clear_bit(Byte data, Byte bit)
+{
+	return data & (~(1 << bit));
+}
+
+bool is_bit_set(Byte data, Byte bit)
+{
+	return ((data >> bit) & 1) ? true : false;
+}
+
 /*
  *	8-Bit Pair Helper Class
  */
@@ -77,8 +92,10 @@ Address Pair::address()
 */
 
 // Initialize CPU internal data structures
-void CPU::init()
+void CPU::init(Memory* _memory, Display* _display)
 {
+	memory = _memory;
+	display = _display;
 	/*
 		Gameboy Power Up Sequence:
 		* On startup, the gameboy runs a 256 byte ROM program which is physically located inside the gameboy, seperate from cartridges.
@@ -122,22 +139,26 @@ void CPU::execute(int total_iterations)
 	{
 		while (current_cycle < cycles_per_frame)
 		{
-			Opcode code = memory.read(reg_PC);
+			Opcode code = memory->read(reg_PC);
 			
-			if (reg_PC == 0x29D) {// 0x282A) {
+			if (reg_PC == 0x282A) {
 				bool breakpoint = true;
 			}
 
 			if (reg_PC == 0x2B6) {
 				bool breakpoint = true;
-			} /**/
+			}
 
 			parse_opcode(code);
 			current_cycle += num_cycles;
 			update_timers(num_cycles);
+			update_scanline(num_cycles);
+			do_interrupts();
 			num_cycles = 0;
 		}
 		// Render();
+		// Reset counter for next frame
+		current_cycle = 0;
 	}
 }
 
@@ -148,7 +169,7 @@ void CPU::update_divider(int cycles)
 	if (divider_counter >= 256) // 16384 Hz
 	{
 		divider_counter = 0;
-		memory.DIV.set(memory.DIV.get() + 1);
+		memory->DIV.set(memory->DIV.get() + 1);
 	}
 }
 
@@ -173,18 +194,18 @@ void CPU::update_timers(int cycles)
 		// enough cpu clock cycles have happened to update timer
 		if (timer_counter <= 0)
 		{
-			Byte timer_value = memory.TIMA.get();
+			Byte timer_value = memory->TIMA.get();
 			set_timer_frequency();
 
 			// Timer will overflow, generate interrupt
 			if (timer_value == 255)
 			{
-				memory.TIMA.set(memory.TMA.get());
+				memory->TIMA.set(memory->TMA.get());
 				request_interrupt(INTERRUPT_TIMER);
 			}
 			else
 			{
-				memory.TIMA.set(timer_value + 1);
+				memory->TIMA.set(timer_value + 1);
 			}
 		}
 	}
@@ -192,12 +213,12 @@ void CPU::update_timers(int cycles)
 
 bool CPU::timer_enabled()
 {
-	return memory.TAC.is_bit_set(BIT_2);
+	return memory->TAC.is_bit_set(BIT_2);
 }
 
 Byte CPU::get_timer_frequency()
 {
-	return (memory.TAC.get() & 0x3);
+	return (memory->TAC.get() & 0x3);
 }
 
 void CPU::set_timer_frequency()
@@ -217,7 +238,7 @@ void CPU::set_timer_frequency()
 
 void CPU::request_interrupt(Byte id)
 {
-	memory.IF.set_bit(id);
+	memory->IF.set_bit(id);
 }
 
 void CPU::do_interrupts()
@@ -226,14 +247,14 @@ void CPU::do_interrupts()
 	if (interrupt_master_enable)
 	{
 		// If there are any interrupts set
-		if (memory.IF.get() > 0)
+		if (memory->IF.get() > 0)
 		{
 			// Loop through each bit and call interrupt for lowest -> highest priority bits set
 			for (int i = 0; i < 5; i++)
 			{
-				if (memory.IF.is_bit_set(i))
+				if (memory->IF.is_bit_set(i))
 				{
-					if (memory.IE.is_bit_set(i))
+					if (memory->IE.is_bit_set(i))
 					{
 						service_interrupt(i);
 					}
@@ -246,7 +267,7 @@ void CPU::do_interrupts()
 void CPU::service_interrupt(Byte id)
 {
 	interrupt_master_enable = false;
-	memory.IF.clear_bit(id);
+	memory->IF.clear_bit(id);
 
 	// Push current execution address to stack
 	PUSH(high_byte(reg_PC), low_byte(reg_PC));
@@ -257,6 +278,115 @@ void CPU::service_interrupt(Byte id)
 		case INTERRUPT_LCDC:   reg_PC = 0x48; break;
 		case INTERRUPT_TIMER:  reg_PC = 0x50; break;
 		case INTERRUPT_JOYPAD: reg_PC = 0x60; break;
+	}
+}
+
+void CPU::set_lcd_status()
+{
+	Byte status = memory->STAT.get();
+
+	if (display->is_lcd_enabled() == false)
+	{
+		// Set mode to 1 during LCD disabled and reset scanline
+		scanline_counter = 456;
+		memory->LY.clear();
+		status &= 252;
+		status = set_bit(status, 0);
+		memory->STAT.set(status);
+		return;
+	}
+
+	Byte current_line = memory->LY.get();
+	// extract current LCD mode
+	Byte current_mode = status & 0x03;
+
+	Byte mode = 0;
+	bool do_interrupt = false;
+
+	// in VBLANK, set mode to 1
+	if (current_line >= 144)
+	{
+		mode = 1; // In vertical blanking period
+		// 1 binary
+		status = set_bit(status, BIT_0);
+		status = clear_bit(status, BIT_1);
+		do_interrupt = is_bit_set(status, BIT_4);
+
+	}
+	else
+	{
+		int mode2_threshold = 456 - 80;
+		int mode3_threshold = mode2_threshold - 172;
+
+		if (scanline_counter >= mode2_threshold)
+		{
+			mode = 2; // Searching OAM RAM
+			// 2 binary
+			status = set_bit(status, BIT_1);
+			status = clear_bit(status, BIT_0);
+			do_interrupt = is_bit_set(status, BIT_5);
+		}
+		else if (scanline_counter >= mode3_threshold)
+		{
+			mode = 3; // Transferring data to LCD driver
+			// 3 binary
+			status = set_bit(status, BIT_1);
+			status = set_bit(status, BIT_0);
+		}
+		else
+		{
+			mode = 0; // CPU has access to all display RAM
+			// 0 binary
+			status = clear_bit(status, BIT_1);
+			status = clear_bit(status, BIT_0);
+			do_interrupt = is_bit_set(status, BIT_3);
+		}
+	}
+
+	// Entered new mode, request interrupt
+	if (do_interrupt && (mode != current_mode))
+		request_interrupt(INTERRUPT_LCDC);
+
+	// check coincidence flag, set bit 2 if it matches
+	if (memory->LY.get() == memory->LYC.get())
+	{
+		status = set_bit(status, BIT_2);
+
+		if (is_bit_set(status, BIT_6))
+			request_interrupt(INTERRUPT_LCDC);
+	}
+	// clear bit 2 if not
+	else
+		status = clear_bit(status, BIT_2);
+
+	memory->STAT.set(status);
+}
+
+void CPU::update_scanline(int cycles)
+{
+	set_lcd_status();
+
+	if (display->is_lcd_enabled())
+		scanline_counter -= cycles;
+	else
+		return;
+
+	if (scanline_counter <= 0)
+	{
+		Byte current_scanline = memory->LY.get();
+		// increment scanline and reset counter
+		memory->LY.set(current_scanline + 1);
+		scanline_counter = 456;
+
+		// Entered VBLANK period
+		if (current_scanline == 144)
+			request_interrupt(0);
+		// Reset counter if past maximum
+		else if (current_scanline > 153)
+			memory->LY.clear();
+		// Draw the next scanline
+		else if (current_scanline < 144)
+			display->draw_scanline();
 	}
 }
 
@@ -275,7 +405,13 @@ void CPU::set_flag(int flag, bool value)
 void CPU::op(int pc, int cycle)
 {
 	reg_PC += pc;
-	num_cycles += cycle;
+
+	/*
+		cycles are multiplied by 4 because I used Nintendo manual opcode cycles
+		which were defined by machine cycles instead of clock cycles. 
+		1 clock cycle = 4 machine cycles
+	*/
+	num_cycles += (cycle * 4);
 }
 
 // 8-bit loads
@@ -287,12 +423,12 @@ void CPU::LD(Byte& destination, Byte value)
 
 void CPU::LD(Byte& destination, Address addr)
 {
-	destination = memory.read(addr);
+	destination = memory->read(addr);
 }
 
 void CPU::LD(Address addr, Byte value)
 {
-	memory.write(addr, value);
+	memory->write(addr, value);
 }
 
 // 16-bit loads
@@ -336,14 +472,14 @@ void CPU::LDNN(Byte low, Byte high)
 
 void CPU::PUSH(Byte high, Byte low)
 {
-	memory.write(--reg_SP, high);
-	memory.write(--reg_SP, low);
+	memory->write(--reg_SP, high);
+	memory->write(--reg_SP, low);
 }
 
 void CPU::POP(Byte& high, Byte& low)
 {
-	low = memory.read(reg_SP++);
-	high = memory.read(reg_SP++);
+	low = memory->read(reg_SP++);
+	high = memory->read(reg_SP++);
 }
 
 // ALU Operations
@@ -363,7 +499,7 @@ void CPU::ADD(Byte& target, Byte value)
 
 void CPU::ADD(Byte& target, Address addr)
 {
-	Byte val = memory.read(addr);
+	Byte val = memory->read(addr);
 	ADD(target, val);
 }
 
@@ -376,7 +512,7 @@ void CPU::ADC(Byte& target, Byte value)
 
 void CPU::ADC(Byte& target, Address addr)
 {
-	Byte val = memory.read(addr);
+	Byte val = memory->read(addr);
 	ADC(target, val);
 }
 
@@ -395,7 +531,7 @@ void CPU::SUB(Byte& target, Byte value)
 
 void CPU::SUB(Byte& target, Address addr)
 {
-	Byte val = memory.read(addr);
+	Byte val = memory->read(addr);
 	SUB(target, val);
 }
 
@@ -408,7 +544,7 @@ void CPU::SBC(Byte& target, Byte value)
 
 void CPU::SBC(Byte& target, Address addr)
 {
-	Byte val = memory.read(addr);
+	Byte val = memory->read(addr);
 	SBC(target, val);
 }
 
@@ -424,7 +560,7 @@ void CPU::AND(Byte& target, Byte value)
 
 void CPU::AND(Byte& target, Address addr)
 {
-	Byte val = memory.read(addr);
+	Byte val = memory->read(addr);
 	AND(target, val);
 }
 
@@ -440,7 +576,7 @@ void CPU::OR(Byte& target, Byte value)
 
 void CPU::OR(Byte& target, Address addr)
 {
-	Byte val = memory.read(addr);
+	Byte val = memory->read(addr);
 	OR(target, val);
 }
 
@@ -456,7 +592,7 @@ void CPU::XOR(Byte& target, Byte value)
 
 void CPU::XOR(Byte& target, Address addr)
 {
-	Byte val = memory.read(addr);
+	Byte val = memory->read(addr);
 	OR(target, val);
 }
 
@@ -473,7 +609,7 @@ void CPU::CP(Byte& target, Byte value)
 
 void CPU::CP(Byte& target, Address addr)
 {
-	Byte val = memory.read(addr);
+	Byte val = memory->read(addr);
 	CP(target, val);
 }
 
@@ -489,9 +625,9 @@ void CPU::INC(Byte& target)
 
 void CPU::INC(Address addr)
 {
-	Byte value = memory.read(addr);
+	Byte value = memory->read(addr);
 	INC(value);
-	memory.write(addr, value);
+	memory->write(addr, value);
 }
 
 void CPU::DEC(Byte& target)
@@ -506,9 +642,9 @@ void CPU::DEC(Byte& target)
 
 void CPU::DEC(Address addr)
 {
-	Byte value = memory.read(addr);
+	Byte value = memory->read(addr);
 	DEC(value);
-	memory.write(addr, value);
+	memory->write(addr, value);
 }
 
 // 16-bit arithmetic
@@ -567,9 +703,9 @@ void CPU::RL(Byte& target, bool carry, bool zero_flag)
 
 void CPU::RL(Address addr, bool carry)
 {
-	Byte value = memory.read(addr);
+	Byte value = memory->read(addr);
 	RL(value, carry, true);
-	memory.write(addr, value);
+	memory->write(addr, value);
 }
 
 void CPU::RR(Byte& target, bool carry, bool zero_flag)
@@ -587,9 +723,9 @@ void CPU::RR(Byte& target, bool carry, bool zero_flag)
 
 void CPU::RR(Address addr, bool carry)
 {
-	Byte value = memory.read(addr);
+	Byte value = memory->read(addr);
 	RR(value, carry, true);
-	memory.write(addr, value);
+	memory->write(addr, value);
 }
 
 // same as shift left but bit 0 is reset
@@ -600,9 +736,9 @@ void CPU::SLA(Byte& target)
 
 void CPU::SLA(Address addr)
 {
-	Byte value = memory.read(addr);
+	Byte value = memory->read(addr);
 	SLA(value);
-	memory.write(addr, value);
+	memory->write(addr, value);
 }
 
 // same as shift right but bit 7 is unchanged
@@ -617,9 +753,9 @@ void CPU::SRA(Byte& target)
 
 void CPU::SRA(Address addr)
 {
-	Byte value = memory.read(addr);
+	Byte value = memory->read(addr);
 	SRA(value);
-	memory.write(addr, value);
+	memory->write(addr, value);
 }
 
 // same as shift right but bit 7 is reset
@@ -630,9 +766,9 @@ void CPU::SRL(Byte& target)
 
 void CPU::SRL(Address addr)
 {
-	Byte value = memory.read(addr);
+	Byte value = memory->read(addr);
 	SRL(value);
-	memory.write(addr, value);
+	memory->write(addr, value);
 }
 
 // swap high nibble with low nibble
@@ -644,9 +780,9 @@ void CPU::SWAP(Byte& target)
 
 void CPU::SWAP(Address addr)
 {
-	Byte value = memory.read(addr);
+	Byte value = memory->read(addr);
 	SWAP(value);
-	memory.write(addr, value);
+	memory->write(addr, value);
 }
 
 // Bit Operations
@@ -660,7 +796,7 @@ void CPU::BIT(Byte target, int bit)
 
 void CPU::BIT(Address addr, int bit)
 {
-	Byte value = memory.read(addr);
+	Byte value = memory->read(addr);
 	BIT(value, bit);
 }
 
@@ -671,9 +807,9 @@ void CPU::SET(Byte& target, int bit)
 
 void CPU::SET(Address addr, int bit)
 {
-	Byte value = memory.read(addr);
+	Byte value = memory->read(addr);
 	SET(value, bit);
-	memory.write(addr, value);
+	memory->write(addr, value);
 }
 
 void CPU::RES(Byte& target, int bit)
@@ -683,9 +819,9 @@ void CPU::RES(Byte& target, int bit)
 
 void CPU::RES(Address addr, int bit)
 {
-	Byte value = memory.read(addr);
+	Byte value = memory->read(addr);
 	RES(value, bit);
-	memory.write(addr, value);
+	memory->write(addr, value);
 }
 
 // Jump Operations
@@ -761,8 +897,8 @@ void CPU::JPHL()
 // Function Instructions
 void CPU::CALL(Byte low, Byte high)
 {
-	memory.write(--reg_SP, high_byte(reg_PC));
-	memory.write(--reg_SP, low_byte(reg_PC));
+	memory->write(--reg_SP, high_byte(reg_PC));
+	memory->write(--reg_SP, low_byte(reg_PC));
 
 	JP(Pair(high, low));
 	op(0, 3);
@@ -794,47 +930,59 @@ void CPU::CALLC(Byte low, Byte high)
 
 void CPU::RET()
 {
-	Byte low = memory.read(reg_SP++);
-	Byte high = memory.read(reg_SP++);
+	Byte low = memory->read(reg_SP++);
+	Byte high = memory->read(reg_SP++);
 
 	reg_PC = Pair(high, low).get();
 	op(0, 3);
 }
 
-void CPU::RETI() // UNIMPLEMENTED
+void CPU::RETI()
 {
 	RET();
-	// master interrupt enable flag is returned to pre-interrupt status
+	interrupt_master_enable = true;
 }
 
 void CPU::RETNZ()
 {
 	if ((reg_F & FLAG_ZERO) == 0)
+	{
 		RET();
+		op(0, 2);
+	}
 }
 
 void CPU::RETZ()
 {
 	if ((reg_F & FLAG_ZERO) != 0)
+	{
 		RET();
+		op(0, 2);
+	}
 }
 
 void CPU::RETNC()
 {
 	if ((reg_F & FLAG_CARRY) == 0)
+	{
 		RET();
+		op(0, 2);
+	}
 }
 
 void CPU::RETC()
 {
 	if ((reg_F & FLAG_CARRY) != 0)
+	{
 		RET();
+		op(0, 2);
+	}
 }
 
 void CPU::RST(Address addr)
 {
-	memory.write(--reg_SP, high_byte(reg_PC));
-	memory.write(--reg_SP, low_byte(reg_PC));
+	memory->write(--reg_SP, high_byte(reg_PC));
+	memory->write(--reg_SP, low_byte(reg_PC));
 
 	reg_PC = addr;
 }

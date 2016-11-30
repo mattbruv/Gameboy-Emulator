@@ -3,23 +3,17 @@
 
 int main(int argc, char *args[])
 {
-	Memory ram;
-	ram.load_rom("C:\\Users\\Matt\\Desktop\\GameBoy Emulator Project\\tetris.gb");
-	CPU cpu(ram);
+	Memory memory;
+	Display display;
+	CPU cpu;
 
-	/*
-	
-		TODO:
+	display.init(&memory);
+	cpu.init(&memory, &display);
 
-		Change CPU, Memory, and Display to use Singleton pattern
-		That way I can refrence each by creating a new variable
-		and not having to worry about passing by reference, etc.
+	memory.load_rom("C:\\Users\\Matt\\Desktop\\GameBoy Emulator Project\\tetris.gb");
 
-	
-	
-	*/
+	cpu.execute(0xFFFFF);
 
-	cpu.execute(0xFFFF);
 
 	return 0;
 }

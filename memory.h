@@ -19,6 +19,7 @@ class MemoryRegister
 		MemoryRegister::MemoryRegister(Byte *_data);
 		Byte get();
 		void set(Byte data);
+		void clear();
 		void set_bit(Byte bit);
 		void clear_bit(Byte bit);
 		bool is_bit_set(Byte bit);
@@ -35,11 +36,14 @@ class Memory
 		vector<Byte> WRAM;		// $C000 - $DFFF, 8kB Working RAM
 		vector<Byte> ZRAM;		// $FF80 - $FFFF, 128 bytes of RAM
 
+		void do_dma_transfer();
+
 	public:
 
 		MemoryRegister
 			DIV, TIMA, TMA, TAC,
-			LCDC, SCY, SCX, LYC, BGP, ZBP0, ZBP1, WY, WX,
+			LCDC, STAT, SCY, SCX, LYC, LY, DMA,
+			BGP, ZBP0, ZBP1, WY, WX,
 			IF, IE;
 
 		Memory::Memory();

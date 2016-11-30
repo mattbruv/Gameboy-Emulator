@@ -274,8 +274,8 @@ void CPU::parse_bit_op(Opcode code)
 
 void CPU::parse_opcode(Opcode code)
 {
-	Byte value  = memory.read(reg_PC + 1);
-	Byte value2 = memory.read(reg_PC + 2);
+	Byte value  = memory->read(reg_PC + 1);
+	Byte value2 = memory->read(reg_PC + 2);
 
 	// REG_D could possibly be incorrect, assumed current value from manual to match GBCPUman
 	switch (code)
@@ -525,7 +525,7 @@ void CPU::parse_opcode(Opcode code)
 		case 0xC8: op(1, 2); RETZ(); break;
 		case 0xD0: op(1, 2); RETNC(); break;
 		case 0xD8: op(1, 2); RETC(); break;
-		// case 0xD9: RETI(); break;  // UNIMPLEMENTED
+		case 0xD9: op(1, 1); RETI(); break;
 		// 109
 		case 0xC7: op(1, 4); RST(0x00); break; // RST() relies on updated PC, op() must be first
 		case 0xCF: op(1, 4); RST(0x08); break;

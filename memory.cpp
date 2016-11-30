@@ -17,6 +17,11 @@ void MemoryRegister::set(Byte data)
 	*value = data;
 }
 
+void MemoryRegister::clear()
+{
+	set(0x00);
+}
+
 void MemoryRegister::set_bit(Byte bit)
 {
 	*value |= 1 << bit;
@@ -46,9 +51,12 @@ Memory::Memory()
 	TMA  = MemoryRegister(&ZRAM[0x06]);
 	TAC  = MemoryRegister(&ZRAM[0x07]);
 	LCDC = MemoryRegister(&ZRAM[0x40]);
+	STAT = MemoryRegister(&ZRAM[0x41]);
 	SCY  = MemoryRegister(&ZRAM[0x42]);
 	SCX  = MemoryRegister(&ZRAM[0x43]);
+	LY   = MemoryRegister(&ZRAM[0x44]);
 	LYC  = MemoryRegister(&ZRAM[0x45]);
+	DMA  = MemoryRegister(&ZRAM[0x46]);
 	BGP  = MemoryRegister(&ZRAM[0x47]);
 	ZBP0 = MemoryRegister(&ZRAM[0x48]);
 	ZBP1 = MemoryRegister(&ZRAM[0x49]);
@@ -80,6 +88,16 @@ void Memory::load_rom(std::string location)
 	ifstream input(location, ios::binary);
 	vector<Byte> buffer((istreambuf_iterator<char>(input)), (istreambuf_iterator<char>()));
 	CART_ROM = buffer;
+}
+
+void Memory::do_dma_transfer()
+{
+	Byte_2 address = DMA.get() << 8; // multiply by 100
+
+	for (int i = 0; i < 0xA0; i++)
+	{
+		write((0xFE00 + i), read(address + i));
+	}
 }
 
 Byte Memory::read(Address location)
@@ -218,6 +236,11 @@ void Memory::write_zero_page(Address location, Byte data)
 	case 0xFF04:
 		ZRAM[0x04] = 0;
 		break;
+	// TODO: STAT - writing to match flag resets flag but doesn't change mode
+
+	// LY Register - Game cannot write to this register directly 
+	case 0xFF44:
+		ZRAM[0x44] = 0;
 	default:
 		ZRAM[location & 0xFF] = data;
 	}

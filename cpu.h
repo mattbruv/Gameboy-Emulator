@@ -2,6 +2,7 @@
 
 #include "types.h"
 #include "memory.h"
+#include "display.h"
 
 // Register pair helper class
 class Pair
@@ -27,19 +28,16 @@ class CPU
 {
 	public:
 
-		CPU(Memory& memory_)
-			: memory(memory_) {
-			init(); 
-		};
-
 		const int CLOCK_SPEED = 4194304; // 4194304 Hz CPU speed
 
+		void init(Memory* _memory, Display* _display);
 		void debug();
 		void execute(int total_iterations);
 
 	private:
 
-		Memory& memory;
+		Memory* memory;
+		Display* display;
 
 		Byte reg_A; // Accumulator
 		Byte reg_B;
@@ -53,11 +51,13 @@ class CPU
 		Byte_2 reg_PC; // Program Counter
 
 		int num_cycles = 0;
-		int timer_counter = 0;
+		int timer_counter = 0; // this may need to be set to some calculated non zero value
 		Byte timer_frequency = 0;
 
 		int divider_counter = 0;
 		int divider_frequency = 16384; // 16384 Hz or every 256 CPU clock cycles
+
+		int scanline_counter = 456; // Clock cycles per scanline draw
 		
 		// 0 - Reset by DI instruction; prohibits all interrupts,
 		// 1 - Set by EI instruction, The interrupts set by IE registers are enabled
@@ -69,7 +69,6 @@ class CPU
 			FLAG_HALF_CARRY = 0b00100000,
 			FLAG_CARRY      = 0b00010000;
 
-		void init();
 		void reset();
 
 		void update_divider(int cycles);
@@ -82,6 +81,9 @@ class CPU
 		void request_interrupt(Byte id);
 		void do_interrupts();
 		void service_interrupt(Byte id);
+
+		void set_lcd_status();
+		void update_scanline(int cycles);
 
 		void stop();
 
