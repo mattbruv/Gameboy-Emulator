@@ -1,5 +1,6 @@
 #pragma once
 
+#include <SFML\System.hpp>
 #include "cpu.h"
 #include "memory.h"
 #include "display.h"
@@ -7,6 +8,7 @@
 class Emulator
 {
 	public:
+
 		Emulator();
 		void run(int total_iterations);
 		CPU cpu;
@@ -14,6 +16,8 @@ class Emulator
 		Display display;
 
 	private:
+
+		float framerate = 60;
 
 		// --------- DIVIDER --------- //
 		int divider_counter = 0;

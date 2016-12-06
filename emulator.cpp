@@ -10,13 +10,17 @@ Emulator::Emulator()
 void Emulator::run(int total_iterations)
 {
 	// CPU cycles to emulate per frame draw
-	int cycles_per_frame = cpu.CLOCK_SPEED / display.framerate;
-
+	float cycles_per_frame = cpu.CLOCK_SPEED / framerate;
+	float time_between_frames = 1000 / framerate;
 	// Current cycle in frame
 	int current_cycle = 0;
 
-	for (int i = 0; i < total_iterations; i++)
+	sf::Time time;
+
+	while(display.window.isOpen())
 	{
+		display.handle_window_events();
+
 		while (current_cycle < cycles_per_frame)
 		{
 			Opcode code = memory.read(cpu.reg_PC);
@@ -32,9 +36,16 @@ void Emulator::run(int total_iterations)
 			do_interrupts();
 			cpu.num_cycles = 0;
 		}
-		// Render();
-		// Reset counter for next frame
+
+		display.render();
 		current_cycle = 0;
+
+		int frame_time = time.asMilliseconds();
+		float sleep_time = time_between_frames - frame_time;
+		if (frame_time < time_between_frames)
+			sf::sleep(sf::milliseconds(sleep_time));
+		time = time.Zero;
+
 	}
 }
 
