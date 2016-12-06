@@ -27,17 +27,19 @@ void Emulator::run(int total_iterations)
 
 			if (cpu.reg_PC == 0x282A) {
 				bool breakpoint = true;
+				display.render();
 			}
 
 			cpu.parse_opcode(code);
 			current_cycle += cpu.num_cycles;
 			update_timers(cpu.num_cycles);
 			update_scanline(cpu.num_cycles);
-			do_interrupts();
+			//do_interrupts();
 			cpu.num_cycles = 0;
 		}
 
 		display.render();
+		//cout << "frame " << current_cycle << endl;
 		current_cycle = 0;
 
 		int frame_time = time.asMilliseconds();

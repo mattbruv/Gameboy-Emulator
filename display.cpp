@@ -61,32 +61,29 @@ void Display::render_tiles()
 	Byte scroll_y = memory->SCY.get();
 
 	// return if the display is not enabled
-	if (!lcd_enabled)
-		return;
+	//if (!lcd_enabled)
+	//	return;
 
 	// Figure out where the current background character data is being stored
-	const Address bg_data_location = (bg_char_selection) ? 0x8000 : 0x8800;
+	const Address bg_data_location = 0x8000;
 
 	// loop through background data as tiles and print tile
-	for (int num_tile = 0; num_tile < 25; num_tile++)
+	for (int current_tile = 0; current_tile < 256; current_tile++)
 	{
-		// 16 bytes per tile
-		Address curr_tile_location = bg_data_location + (num_tile * 16);
-
-		for (int row = 0; row < 8; row++)
+		for (int y = 0; y < 8; y++)
 		{
-			Address addr1 = curr_tile_location + (row * 2);
-			Address addr2 = curr_tile_location + (row * 2) + 1;
-			Byte low  = memory->read(addr1);
-			Byte high = memory->read(addr2);
+			int offset = (current_tile * 16) + bg_data_location;
 
-			for (int column = 0; column < 8; column++)
+			Byte
+				high = memory->read(offset + (y * 2)),
+				low  = memory->read(offset + (y * 2) + 1);
+
+			for (int x = 0; x < 8; x++)
 			{
-				int pixel_x = (num_tile * 8) + column;
-				int pixel_y = ((floor(num_tile / 20)) * 8) + row;
-				// get the color for this pixel in tile
-				sf::Color color = get_pixel_color(low, high, column);
+				int pixel_x = ((current_tile % 20) * 8) + x;
+				int pixel_y = (floor(current_tile / 20) * 8) + y;
 
+				sf::Color color = get_pixel_color(low, high, x);
 				pixel_array.setPixel(pixel_x, pixel_y, color);
 			}
 		}
