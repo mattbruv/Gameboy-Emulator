@@ -80,7 +80,7 @@ void Display::render_tiles()
 
 			for (int x = 0; x < 8; x++)
 			{
-				int pixel_x = ((current_tile % 20) * 8) + x;
+				int pixel_x = ((current_tile % 20) * 8) + 7 - x;
 				int pixel_y = (floor(current_tile / 20) * 8) + y;
 
 				sf::Color color = get_pixel_color(low, high, x);
@@ -104,7 +104,7 @@ sf::Color Display::get_pixel_color(Byte top, Byte bottom, int bit)
 		case 0b10: return sf::Color(85, 85, 85);
 		case 0b01: return sf::Color(170, 170, 170);
 		case 0b00: return sf::Color(255, 255, 255);
-		default:   return sf::Color(255, 0, 255);
+		default:   return sf::Color(0, 0, 255);
 	}
 }
 
