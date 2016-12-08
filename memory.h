@@ -18,6 +18,7 @@ class Memory
 	public:
 
 		MemoryRegister
+			P1,
 			DIV, TIMA, TMA, TAC,
 			LCDC, STAT, SCY, SCX, LYC, LY, DMA,
 			BGP, ZBP0, ZBP1, WY, WX,

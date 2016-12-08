@@ -34,7 +34,7 @@ void Emulator::run(int total_iterations)
 			current_cycle += cpu.num_cycles;
 			update_timers(cpu.num_cycles);
 			update_scanline(cpu.num_cycles);
-			//do_interrupts();
+			do_interrupts();
 			cpu.num_cycles = 0;
 		}
 

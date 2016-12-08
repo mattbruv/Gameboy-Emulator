@@ -21,6 +21,7 @@ class CPU
 		const int CLOCK_SPEED = 4194304; // 4194304 Hz CPU speed
 		int num_cycles = 0;
 		bool interrupt_master_enable = false;
+		Address last_fn_call;
 
 		void init(Memory* _memory);
 		void parse_opcode(Opcode code);

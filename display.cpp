@@ -11,25 +11,7 @@ void Display::render()
 {
 	window.clear(sf::Color::Green);
 
-	render_tiles();
-	/*
-	pixel_array.setPixel(0, 0, sf::Color::Yellow);
-	pixel_array.setPixel(0, 1, sf::Color::Green);
-	pixel_array.setPixel(0, 2, sf::Color::Blue);
-	pixel_array.setPixel(0, 3, sf::Color::Yellow);
-	pixel_array.setPixel(0, 4, sf::Color::Green);
-	pixel_array.setPixel(0, 5, sf::Color::Blue);
-	pixel_array.setPixel(0, 6, sf::Color::Yellow);
-	pixel_array.setPixel(0, 7, sf::Color::Green);
-	pixel_array.setPixel(0, 8, sf::Color::Blue);
-	pixel_array.setPixel(0, 9, sf::Color::Green);
-	pixel_array.setPixel(0, 10, sf::Color::Yellow);
-	pixel_array.setPixel(0, 11, sf::Color::Green);
-	pixel_array.setPixel(0, 12, sf::Color::Blue);
-	pixel_array.setPixel(0, 13, sf::Color::Yellow);
-	pixel_array.setPixel(0, 14, sf::Color::Green);
-	pixel_array.setPixel(0, 15, sf::Color::Blue); /**/
-
+	render_screen();
 
 	sf::Texture pixel_texture;
 	pixel_texture.loadFromImage(pixel_array);
@@ -39,7 +21,7 @@ void Display::render()
 	window.display();
 }
 
-void Display::render_tiles()
+void Display::render_screen()
 {
 	// The goal right now is to just print the first tile in memory to screen
 
@@ -57,35 +39,50 @@ void Display::render_tiles()
 
 	bool lcd_enabled = is_lcd_enabled();
 
+	// return if the display is not enabled
+	if (!lcd_enabled)
+		return;
+
+	Address tile_map = (bg_code_area) ? 0x9C00 : 0x9800;
 	Byte scroll_x = memory->SCX.get();
 	Byte scroll_y = memory->SCY.get();
 
-	// return if the display is not enabled
-	//if (!lcd_enabled)
-	//	return;
+	// width in tiles * height in tiles = total tiles
+	int background_tiles = (160 / 8) * (144 / 8);
 
-	// Figure out where the current background character data is being stored
-	const Address bg_data_location = 0x8000;
-
-	// loop through background data as tiles and print tile
-	for (int current_tile = 0; current_tile < 256; current_tile++)
+	for (int map = 0; map < background_tiles; map++)
 	{
-		for (int y = 0; y < 8; y++)
+		int mod = (map % 20);
+		int y = floor(map / 20);
+		int result = mod + (y * 32);
+
+		result += tile_map;
+		int tile_id = memory->read(result);
+		render_tile(map, tile_id);
+
+	}
+}
+
+void Display::render_tile(int display_number, int tile_number)
+{
+	// Figure out where the current background character data is being stored
+	const Address bg_data_location = 0x8000; // TODO: set via LCDC register
+
+	for (int y = 0; y < 8; y++)
+	{
+		int offset = (tile_number * 16) + bg_data_location;
+
+		Byte
+			high = memory->read(offset + (y * 2)),
+			low  = memory->read(offset + (y * 2) + 1);
+
+		for (int x = 0; x < 8; x++)
 		{
-			int offset = (current_tile * 16) + bg_data_location;
+			int pixel_x = ((display_number % 20) * 8) + 7 - x;
+			int pixel_y = (floor(display_number / 20) * 8) + y;
 
-			Byte
-				high = memory->read(offset + (y * 2)),
-				low  = memory->read(offset + (y * 2) + 1);
-
-			for (int x = 0; x < 8; x++)
-			{
-				int pixel_x = ((current_tile % 20) * 8) + 7 - x;
-				int pixel_y = (floor(current_tile / 20) * 8) + y;
-
-				sf::Color color = get_pixel_color(low, high, x);
-				pixel_array.setPixel(pixel_x, pixel_y, color);
-			}
+			sf::Color color = get_pixel_color(low, high, x);
+			pixel_array.setPixel(pixel_x, pixel_y, color);
 		}
 	}
 }
@@ -100,10 +97,18 @@ sf::Color Display::get_pixel_color(Byte top, Byte bottom, int bit)
 
 	switch (color_code)
 	{
+
+	case 0b11: return sf::Color(8, 24, 32);
+	case 0b01: return sf::Color(48, 104, 80);
+	case 0b10: return sf::Color(136, 192, 112);
+	case 0b00: return sf::Color(224, 248, 208);
+		/*
 		case 0b11: return sf::Color(0, 0, 0);
 		case 0b10: return sf::Color(85, 85, 85);
 		case 0b01: return sf::Color(170, 170, 170);
 		case 0b00: return sf::Color(255, 255, 255);
+		*/
+
 		default:   return sf::Color(0, 0, 255);
 	}
 }

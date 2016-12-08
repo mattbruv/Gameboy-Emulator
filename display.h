@@ -30,6 +30,7 @@ class Display
 			COLOR_DARK_GRAY  = 2,
 			COLOR_BLACK      = 3;
 
-		void render_tiles();
+		void render_screen();
+		void render_tile(int display_number, int tile_number);
 		sf::Color get_pixel_color(Byte top, Byte bottom, int bit);
 };

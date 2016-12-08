@@ -9,6 +9,7 @@ Memory::Memory()
 	OAM  = vector<Byte>(0x00A0); // $FE00 - $FEA0, OAM Sprite RAM
 
 	// Initialize Memory Register objects for easy reference
+	P1   = MemoryRegister(&ZRAM[0x00]);
 	DIV  = MemoryRegister(&ZRAM[0x04]);
 	TIMA = MemoryRegister(&ZRAM[0x05]);
 	TMA  = MemoryRegister(&ZRAM[0x06]);
@@ -44,6 +45,9 @@ Memory::Memory()
 	WX.set(0x00);
 	IF.set(0x00);
 	IE.set(0x00);
+
+	// Keypad test
+	///P1.set(0b110000);
 }
 
 void Memory::load_rom(std::string location)
@@ -207,6 +211,8 @@ void Memory::write_zero_page(Address location, Byte data)
 	// DMA transfer request
 	case 0xFF46:
 		do_dma_transfer();
+	case 0xFF80: // temporary patch for tetris
+		return;
 	default:
 		ZRAM[location & 0xFF] = data;
 	}
