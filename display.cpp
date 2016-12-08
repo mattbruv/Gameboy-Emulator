@@ -4,6 +4,7 @@ void Display::init(Memory* _memory)
 {
 	memory = _memory;
 	window.create(sf::VideoMode(width, height), "Gameboy Emulator");
+	window.setSize(sf::Vector2u(width * 2, height * 2));
 	pixel_array.create(160, 144, sf::Color(255, 0, 255));
 }
 
@@ -110,17 +111,6 @@ sf::Color Display::get_pixel_color(Byte top, Byte bottom, int bit)
 		*/
 
 		default:   return sf::Color(0, 0, 255);
-	}
-}
-
-void Display::handle_window_events()
-{
-	sf::Event event;
-	
-	while (window.pollEvent(event))
-	{
-		if (event.type == sf::Event::Closed)
-			window.close();
 	}
 }
 

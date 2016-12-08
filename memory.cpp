@@ -30,11 +30,12 @@ Memory::Memory()
 	IE   = MemoryRegister(&ZRAM[0xFF]);
 
 	// The following memory locations are set to the following values after gameboy BIOS runs
+	P1.set(0x00);
 	DIV.set(0x00);
 	TIMA.set(0x00);
 	TMA.set(0x00);
 	TAC.set(0x00);
-	LCDC.set(0x91);
+	LCDC.set(0x83);
 	SCY.set(0x00);
 	SCX.set(0x00);
 	LYC.set(0x00);
@@ -46,8 +47,7 @@ Memory::Memory()
 	IF.set(0x00);
 	IE.set(0x00);
 
-	// Keypad test
-	///P1.set(0b110000);
+	joypad_input = 0xFF;
 }
 
 void Memory::load_rom(std::string location)
@@ -65,6 +65,25 @@ void Memory::do_dma_transfer()
 	{
 		write((0xFE00 + i), read(address + i));
 	}
+}
+
+Byte Memory::get_joypad_state()
+{
+	Byte result = 0x00;
+	// Standard button press
+	if (P1.is_bit_set(BIT_4))
+	{
+		result = joypad_input >> 4;
+		result |= P1.get();
+	}
+	// Directional button press
+	else if (P1.is_bit_set(BIT_5))
+	{
+		result = joypad_input & 0xF;
+		result |= P1.get();
+	}
+
+	return result;
 }
 
 Byte Memory::read(Address location)
@@ -120,6 +139,9 @@ Byte Memory::read(Address location)
 					return 0; // Empty but usable.. possibly return regular memory
 
 			case 0xF00:
+				if (location == 0xFF00)
+					return get_joypad_state();
+				else
 					return ZRAM[location & 0xFF];
 		}
 	default:
@@ -199,6 +221,10 @@ void Memory::write_zero_page(Address location, Byte data)
 {
 	switch (location)
 	{
+	// Joypad Register - only bits 4 & 5 can be written to
+	case 0xFF00:
+		ZRAM[0x00] = (data | (P1.get() & 0xCF));
+		break;
 	// Divider Register - Write as zero no matter content
 	case 0xFF04:
 		ZRAM[0x04] = 0;

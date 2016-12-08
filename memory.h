@@ -14,6 +14,7 @@ class Memory
 		vector<Byte> ZRAM;		// $FF80 - $FFFF, 128 bytes of RAM
 
 		void do_dma_transfer();
+		Byte get_joypad_state();
 
 	public:
 
@@ -23,6 +24,8 @@ class Memory
 			LCDC, STAT, SCY, SCX, LYC, LY, DMA,
 			BGP, ZBP0, ZBP1, WY, WX,
 			IF, IE;
+
+		Byte joypad_input;
 
 		Memory::Memory();
 		void load_rom(std::string location);

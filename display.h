@@ -16,7 +16,6 @@ class Display
 
 		void init(Memory* _memory);
 
-		void handle_window_events();
 		void draw_scanline();
 		bool is_lcd_enabled();
 		void render();

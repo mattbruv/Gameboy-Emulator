@@ -4,6 +4,7 @@ Emulator::Emulator()
 {
 	cpu.init(&memory);
 	display.init(&memory);
+	joypad.init(&memory);
 }
 
 // Start emulation of CPU
@@ -19,7 +20,7 @@ void Emulator::run(int total_iterations)
 
 	while(display.window.isOpen())
 	{
-		display.handle_window_events();
+		handle_events();
 
 		while (current_cycle < cycles_per_frame)
 		{
@@ -48,6 +49,31 @@ void Emulator::run(int total_iterations)
 			sf::sleep(sf::milliseconds(sleep_time));
 		time = time.Zero;
 
+	}
+}
+
+void Emulator::handle_events()
+{
+	sf::Event event;
+
+	while (display.window.pollEvent(event))
+	{
+		switch (event.type)
+		{
+			case sf::Event::Closed:
+				display.window.close();
+				break;
+			case sf::Event::KeyPressed:
+				cout << "PRESS " << event.key.code << endl;
+				if (joypad.handle_key_event(event.key.code, true)) {
+					request_interrupt(INTERRUPT_JOYPAD);
+				}
+				break;
+			case sf::Event::KeyReleased:
+				cout << "UNPRESS " << event.key.code << endl;
+				joypad.handle_key_event(event.key.code, false);
+				break;
+		}
 	}
 }
 
@@ -167,6 +193,7 @@ void Emulator::service_interrupt(Byte id)
 	case INTERRUPT_VBLANK: cpu.reg_PC = 0x40; break;
 	case INTERRUPT_LCDC:   cpu.reg_PC = 0x48; break;
 	case INTERRUPT_TIMER:  cpu.reg_PC = 0x50; break;
+	case INTERRUPT_SERIAL: cpu.reg_PC = 0x58; break;
 	case INTERRUPT_JOYPAD: cpu.reg_PC = 0x60; break;
 	}
 }

@@ -4,6 +4,7 @@
 #include "cpu.h"
 #include "memory.h"
 #include "display.h"
+#include "joypad.h"
 
 class Emulator
 {
@@ -14,10 +15,14 @@ class Emulator
 		CPU cpu;
 		Memory memory;
 		Display display;
+		Joypad joypad;
 
 	private:
 
 		float framerate = 60;
+
+		// -------- EVENTS ------- //
+		void Emulator::handle_events();
 
 		// --------- DIVIDER --------- //
 		int divider_counter = 0;
