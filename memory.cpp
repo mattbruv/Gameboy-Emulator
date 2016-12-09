@@ -149,6 +149,8 @@ Byte Memory::read(Address location)
 			case 0xF00:
 				if (location == 0xFF00)
 					return get_joypad_state();
+				if (location == 0xFF04)
+					return 2;
 				else
 					return ZRAM[location & 0xFF];
 		}

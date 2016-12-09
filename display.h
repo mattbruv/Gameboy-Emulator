@@ -37,5 +37,5 @@ class Display
 		void render_sprites();
 		void render_sprite_tile(int start_x, int start_y, int tile_id);
 		void render_bg_tile(int display_number, int tile_id);
-		sf::Color get_pixel_color(Byte top, Byte bottom, int bit);
+		sf::Color get_pixel_color(Byte top, Byte bottom, int bit, bool is_sprite);
 };

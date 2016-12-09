@@ -13,6 +13,9 @@ void Display::render()
 {
 	window.clear(sf::Color::Transparent);
 
+	// clear existig sprite data
+	sprites_array.create(160, 144, sf::Color(0, 0, 0, 0));
+
 	render_background();
 	render_sprites();
 
@@ -89,7 +92,7 @@ void Display::render_bg_tile(int display_number, int tile_id)
 			int pixel_x = ((display_number % 20) * 8) + 7 - x;
 			int pixel_y = (floor(display_number / 20) * 8) + y;
 
-			sf::Color color = get_pixel_color(low, high, x);
+			sf::Color color = get_pixel_color(low, high, x, false);
 			bg_array.setPixel(pixel_x, pixel_y, color);
 		}
 	}
@@ -135,17 +138,17 @@ void Display::render_sprite_tile(int start_x, int start_y, int tile_id)
 
 		for (int x = 0; x < 8; x++)
 		{
-			int pixel_x = start_x + x;
+			int pixel_x = start_x + 7 - x;
 			int pixel_y = start_y + y;
 
-			sf::Color color = get_pixel_color(low, high, x);
+			sf::Color color = get_pixel_color(low, high, x, true);
 			sprites_array.setPixel(pixel_x, pixel_y, color);
 		}
 	}
 }
 
 // Returns the color of a pixel at X bit based on the 2 relevant line bytes
-sf::Color Display::get_pixel_color(Byte top, Byte bottom, int bit)
+sf::Color Display::get_pixel_color(Byte top, Byte bottom, int bit, bool is_sprite)
 {
 	Byte first = (Byte)is_bit_set(top, bit);
 	Byte second = (Byte)is_bit_set(bottom, bit);
@@ -154,18 +157,16 @@ sf::Color Display::get_pixel_color(Byte top, Byte bottom, int bit)
 
 	switch (color_code)
 	{
-
-	case 0b11: return sf::Color(8, 24, 32);
-	case 0b01: return sf::Color(48, 104, 80);
-	case 0b10: return sf::Color(136, 192, 112);
-	case 0b00: return sf::Color(224, 248, 208);
+		case 0b11: return sf::Color(8, 24, 32);
+		case 0b01: return sf::Color(48, 104, 80);
+		case 0b10: return sf::Color(136, 192, 112);
+		case 0b00: return sf::Color(224, 248, 208, ((is_sprite) ? 0 : 255));
 		/*
 		case 0b11: return sf::Color(0, 0, 0);
 		case 0b10: return sf::Color(85, 85, 85);
 		case 0b01: return sf::Color(170, 170, 170);
 		case 0b00: return sf::Color(255, 255, 255);
 		*/
-
 		default:   return sf::Color(0, 0, 255);
 	}
 }
