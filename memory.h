@@ -28,6 +28,7 @@ class Memory
 		Byte joypad_input;
 
 		Memory::Memory();
+		void reset();
 		void load_rom(std::string location);
 
 		Byte read(Address location);

@@ -9,18 +9,24 @@
 void CPU::init(Memory* _memory)
 {
 	memory = _memory;
+	reset();
+}
+
+// Reproduces the effect of a reset signal sent to the CPU
+void CPU::reset()
+{
 	/*
-		Gameboy Power Up Sequence:
+	Gameboy Power Up Sequence:
 
-		* On startup, the gameboy runs a 256 byte ROM program which is physically located
-		inside the gameboy,seperate from cartridges.
+	* On startup, the gameboy runs a 256 byte ROM program which is physically located
+	inside the gameboy,seperate from cartridges.
 
-		* It compares memory from cartridge 0x104 - 0x133 to internal memory to verify nintendo logo.
-			* Nintendo logo is scrolled to middle of screen and two musical notes play
-		* If any byte fails to compare, it stops comparing and halts all operations.	
+	* It compares memory from cartridge 0x104 - 0x133 to internal memory to verify nintendo logo.
+	* Nintendo logo is scrolled to middle of screen and two musical notes play
+	* If any byte fails to compare, it stops comparing and halts all operations.
 
-		* If all above checks pass, the internal ROM is disabled and the cartridge is 
-		excecuted at 0x100 with the following register values. 
+	* If all above checks pass, the internal ROM is disabled and the cartridge is
+	excecuted at 0x100 with the following register values.
 	*/
 	reg_A = 0x01;
 	reg_B = 0x00;
@@ -34,8 +40,6 @@ void CPU::init(Memory* _memory)
 	reg_PC = 0x100;
 }
 
-// Reproduces the effect of a reset signal sent to the CPU
-void CPU::reset() {}
 void CPU::stop() {}
 
 void CPU::op(int pc, int cycle)

@@ -65,6 +65,12 @@ void Emulator::handle_events()
 				break;
 			case sf::Event::KeyPressed:
 				cout << "PRESS " << event.key.code << endl;
+				if (event.key.code == 58)
+				{
+					cpu.reset();
+					memory.reset();
+				}
+				
 				if (joypad.handle_key_event(event.key.code, true)) {
 					request_interrupt(INTERRUPT_JOYPAD);
 				}

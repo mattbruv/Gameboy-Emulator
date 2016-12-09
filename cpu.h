@@ -24,6 +24,7 @@ class CPU
 		Address last_fn_call;
 
 		void init(Memory* _memory);
+		void reset();
 		void parse_opcode(Opcode code);
 		void debug();
 
@@ -40,7 +41,6 @@ class CPU
 		void op(int pc, int cycle);
 		void parse_bit_op(Opcode code);
 		void set_flag(int flag, bool value);
-		void reset();
 		void stop();
 
 		// ---------- CPU INSTRUCTIONS ---------- //
