@@ -6,12 +6,12 @@ void Display::init(Memory* _memory)
 	window.create(sf::VideoMode(width, height), "Gameboy Emulator");
 	window.setSize(sf::Vector2u(width * 2, height * 2));
 	bg_array.create(160, 144, sf::Color(255, 0, 255));
-	sprites_array.create(160, 144, sf::Color(255, 0, 0, 0));
+	sprites_array.create(160, 144, sf::Color(0, 0, 0, 0)); // transparent
 }
 
 void Display::render()
 {
-	window.clear(sf::Color::Green);
+	window.clear(sf::Color::Transparent);
 
 	render_background();
 	render_sprites();
@@ -27,7 +27,7 @@ void Display::render()
 	
 	window.draw(bg_sprite);
 	window.draw(sprites_sprite);
-	
+
 	window.display();
 }
 
@@ -97,19 +97,25 @@ void Display::render_bg_tile(int display_number, int tile_id)
 
 void Display::render_sprites()
 {
-	Address sprite_data_location = 0x8000;
+	Address sprite_data_location = 0xFE00;
 
 	// 160 bytes of sprite data / 4 bytes per sprite = 40 sprites
 	for (int sprite_id = 0; sprite_id < 40; sprite_id++)
 	{
 		Address offset = sprite_data_location + (sprite_id * 4);
-		Byte y_pos   = memory->read(offset);
-		Byte x_pos   = memory->read(offset + 1);
-		Byte tile_id = memory->read(offset + 2);
-		Byte flags   = memory->read(offset + 3);
+		Byte y_pos   = memory->read(offset) - 16;
+		Byte x_pos   = memory->read(offset + 1) - 8;
 
 		if (y_pos == 0 || y_pos >= 160)
 			continue;
+
+		Byte tile_id = memory->read(offset + 2);
+		Byte flags   = memory->read(offset + 3);
+
+		
+
+		//if (x_pos == 0 || x_pos >= 168)
+		//	continue;
 
 		render_sprite_tile(x_pos, y_pos, tile_id);
 	}

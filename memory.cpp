@@ -6,7 +6,7 @@ Memory::Memory()
 	ERAM = vector<Byte>(0x2000); // $A000 - $BFFF, 8kB switchable RAM bank, size liable to change in future
 	ZRAM = vector<Byte>(0x0100); // $FF00 - $FFFF, 256 bytes of RAM
 	VRAM = vector<Byte>(0x2000); // $8000 - $9FFF, 8kB Video RAM
-	OAM  = vector<Byte>(0x00A0); // $FE00 - $FEA0, OAM Sprite RAM
+	OAM  = vector<Byte>(0x0100); // $FE00 - $FEFF, OAM Sprite RAM, IO RAM
 
 	// Initialize Memory Register objects for easy reference
 	P1   = MemoryRegister(&ZRAM[0x00]);
@@ -144,10 +144,7 @@ Byte Memory::read(Address location)
 
 			// Sprite OAM
 			case 0xE00:
-				if (location < 0xFEA0)
 					return OAM[location & 0xFF];
-				else
-					return 0; // Empty but usable.. possibly return regular memory
 
 			case 0xF00:
 				if (location == 0xFF00)
@@ -213,13 +210,8 @@ void Memory::write(Address location, Byte data)
 
 		// Sprite OAM
 		case 0xE00:
-			if (location < 0xFEA0)
-			{
-				OAM[location & 0xFF] = data;
-				break;
-			}
-			else
-				return; // Write here?
+			OAM[location & 0xFF] = data;
+			break;
 
 		case 0xF00:
 			write_zero_page(location, data);
@@ -245,12 +237,16 @@ void Memory::write_zero_page(Address location, Byte data)
 	// LY Register - Game cannot write to this register directly 
 	case 0xFF44:
 		ZRAM[0x44] = 0;
+		break;
 	// DMA transfer request
 	case 0xFF46:
+		ZRAM[0x46] = data;
 		do_dma_transfer();
+		break;
 	case 0xFF80: // temporary patch for tetris
-		return;
+		break;
 	default:
 		ZRAM[location & 0xFF] = data;
+		break;
 	}
 }
