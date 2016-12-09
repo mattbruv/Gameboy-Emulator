@@ -8,8 +8,12 @@ class Display
 {
 	public:
 		sf::RenderWindow window;
-		sf::Image pixel_array;
-		sf::Sprite pixel_sprite;
+		
+		sf::Image bg_array;
+		sf::Image sprites_array;
+
+		sf::Sprite bg_sprite;
+		sf::Sprite sprites_sprite; // lol
 
 		int width = 160,
 			height = 144;
@@ -29,7 +33,9 @@ class Display
 			COLOR_DARK_GRAY  = 2,
 			COLOR_BLACK      = 3;
 
-		void render_screen();
-		void render_tile(int display_number, int tile_number);
+		void render_background();
+		void render_sprites();
+		void render_sprite_tile(int start_x, int start_y, int tile_id);
+		void render_bg_tile(int display_number, int tile_id);
 		sf::Color get_pixel_color(Byte top, Byte bottom, int bit);
 };

@@ -5,27 +5,34 @@ void Display::init(Memory* _memory)
 	memory = _memory;
 	window.create(sf::VideoMode(width, height), "Gameboy Emulator");
 	window.setSize(sf::Vector2u(width * 2, height * 2));
-	pixel_array.create(160, 144, sf::Color(255, 0, 255));
+	bg_array.create(160, 144, sf::Color(255, 0, 255));
+	sprites_array.create(160, 144, sf::Color(255, 0, 0, 0));
 }
 
 void Display::render()
 {
 	window.clear(sf::Color::Green);
 
-	render_screen();
+	render_background();
+	render_sprites();
 
-	sf::Texture pixel_texture;
-	pixel_texture.loadFromImage(pixel_array);
-	pixel_sprite.setTexture(pixel_texture);
-	window.draw(pixel_sprite);
+	sf::Texture bg_texture;
+	sf::Texture sprites_texture;
+
+	bg_texture.loadFromImage(bg_array);
+	sprites_texture.loadFromImage(sprites_array);
+
+	bg_sprite.setTexture(bg_texture);
+	sprites_sprite.setTexture(sprites_texture);
+	
+	window.draw(bg_sprite);
+	window.draw(sprites_sprite);
 	
 	window.display();
 }
 
-void Display::render_screen()
+void Display::render_background()
 {
-	// The goal right now is to just print the first tile in memory to screen
-
 	// LCDC variables
 	bool bg_enabled = memory->LCDC.is_bit_set(BIT_0);
 
@@ -59,19 +66,19 @@ void Display::render_screen()
 
 		result += tile_map;
 		int tile_id = memory->read(result);
-		render_tile(map, tile_id);
+		render_bg_tile(map, tile_id);
 
 	}
 }
 
-void Display::render_tile(int display_number, int tile_number)
+void Display::render_bg_tile(int display_number, int tile_id)
 {
 	// Figure out where the current background character data is being stored
-	const Address bg_data_location = 0x8000; // TODO: set via LCDC register
+	Address bg_data_location = 0x8000; // TODO: set via LCDC register
 
 	for (int y = 0; y < 8; y++)
 	{
-		int offset = (tile_number * 16) + bg_data_location;
+		int offset = (tile_id * 16) + bg_data_location;
 
 		Byte
 			high = memory->read(offset + (y * 2)),
@@ -83,7 +90,50 @@ void Display::render_tile(int display_number, int tile_number)
 			int pixel_y = (floor(display_number / 20) * 8) + y;
 
 			sf::Color color = get_pixel_color(low, high, x);
-			pixel_array.setPixel(pixel_x, pixel_y, color);
+			bg_array.setPixel(pixel_x, pixel_y, color);
+		}
+	}
+}
+
+void Display::render_sprites()
+{
+	Address sprite_data_location = 0x8000;
+
+	// 160 bytes of sprite data / 4 bytes per sprite = 40 sprites
+	for (int sprite_id = 0; sprite_id < 40; sprite_id++)
+	{
+		Address offset = sprite_data_location + (sprite_id * 4);
+		Byte y_pos   = memory->read(offset);
+		Byte x_pos   = memory->read(offset + 1);
+		Byte tile_id = memory->read(offset + 2);
+		Byte flags   = memory->read(offset + 3);
+
+		if (y_pos == 0 || y_pos >= 160)
+			continue;
+
+		render_sprite_tile(x_pos, y_pos, tile_id);
+	}
+}
+
+void Display::render_sprite_tile(int start_x, int start_y, int tile_id)
+{
+	Address sprite_data_location = 0x8000;
+
+	for (int y = 0; y < 8; y++)
+	{
+		int offset = (tile_id * 16) + sprite_data_location;
+
+		Byte
+			high = memory->read(offset + (y * 2)),
+			low  = memory->read(offset + (y * 2) + 1);
+
+		for (int x = 0; x < 8; x++)
+		{
+			int pixel_x = start_x + x;
+			int pixel_y = start_y + y;
+
+			sf::Color color = get_pixel_color(low, high, x);
+			sprites_array.setPixel(pixel_x, pixel_y, color);
 		}
 	}
 }
