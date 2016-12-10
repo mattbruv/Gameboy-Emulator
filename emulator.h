@@ -4,7 +4,8 @@
 #include "cpu.h"
 #include "memory.h"
 #include "display.h"
-#include "joypad.h"
+
+typedef sf::Keyboard::Key Key;
 
 class Emulator
 {
@@ -15,14 +16,18 @@ class Emulator
 		CPU cpu;
 		Memory memory;
 		Display display;
-		Joypad joypad;
 
 	private:
 
 		float framerate = 60;
 
 		// -------- EVENTS ------- //
-		void Emulator::handle_events();
+		void handle_events();
+
+		// -------- JOYPAD ------- //
+		void key_pressed(Key key);
+		void key_released(Key key);
+		int get_key_id(Key key);
 
 		// --------- DIVIDER --------- //
 		int divider_counter = 0;

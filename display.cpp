@@ -4,7 +4,7 @@ void Display::init(Memory* _memory)
 {
 	memory = _memory;
 	window.create(sf::VideoMode(width, height), "Gameboy Emulator");
-	window.setSize(sf::Vector2u(width * 2, height * 2));
+	window.setSize(sf::Vector2u(width * 3, height * 3));
 	bg_array.create(160, 144, sf::Color(255, 0, 255));
 	sprites_array.create(160, 144, sf::Color(0, 0, 0, 0)); // transparent
 }

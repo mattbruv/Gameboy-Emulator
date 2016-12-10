@@ -4,7 +4,6 @@ Emulator::Emulator()
 {
 	cpu.init(&memory);
 	display.init(&memory);
-	joypad.init(&memory);
 }
 
 // Start emulation of CPU
@@ -52,6 +51,7 @@ void Emulator::run(int total_iterations)
 	}
 }
 
+// Hanlde window events and IO
 void Emulator::handle_events()
 {
 	sf::Event event;
@@ -64,22 +64,91 @@ void Emulator::handle_events()
 				display.window.close();
 				break;
 			case sf::Event::KeyPressed:
-				cout << "PRESS " << event.key.code << endl;
-				if (event.key.code == 58)
-				{
-					cpu.reset();
-					memory.reset();
-				}
-				
-				if (joypad.handle_key_event(event.key.code, true)) {
-					request_interrupt(INTERRUPT_JOYPAD);
-				}
+				key_pressed(event.key.code);
 				break;
 			case sf::Event::KeyReleased:
-				cout << "UNPRESS " << event.key.code << endl;
-				joypad.handle_key_event(event.key.code, false);
+				key_released(event.key.code);
 				break;
 		}
+	}
+}
+
+void Emulator::key_pressed(Key key)
+{
+	int key_id = get_key_id(key);
+
+	if (key_id < 0)
+		return;
+
+	bool directional = false;
+
+	if (key == Key::Up || key == Key::Down || key == Key::Left || key == Key::Right)
+	{
+		directional = true;
+	}
+
+	Byte joypad = (directional) ? memory.joypad_arrows : memory.joypad_buttons;
+	bool unpressed = is_bit_set(joypad, key_id);
+	
+	if (!unpressed)
+		return;
+
+	if (directional)
+		memory.joypad_arrows = clear_bit(joypad, key_id);
+	else
+		memory.joypad_buttons = clear_bit(joypad, key_id);
+
+	cout << "set key " << key_id << endl;
+
+	request_interrupt(INTERRUPT_JOYPAD);
+}
+
+void Emulator::key_released(Key key)
+{
+	int key_id = get_key_id(key);
+
+	if (key_id < 0)
+		return;
+
+	bool directional = false;
+
+	if (key == Key::Up || key == Key::Down || key == Key::Left || key == Key::Right)
+	{
+		directional = true;
+	}
+
+	Byte joypad = (directional) ? memory.joypad_arrows : memory.joypad_buttons;
+	bool unpressed = is_bit_set(joypad, key_id);
+
+	if (unpressed)
+		return;
+
+	if (directional)
+		memory.joypad_arrows = set_bit(joypad, key_id);
+	else
+		memory.joypad_buttons = set_bit(joypad, key_id);
+
+	cout << "reset key " << key_id << endl;
+}
+
+int Emulator::get_key_id(Key key)
+{
+	switch (key)
+	{
+		case Key::A:
+		case Key::Right:
+			return BIT_0;
+		case Key::S: // B
+		case Key::Left:
+			return BIT_1;
+		case Key::X: // select
+		case Key::Up:
+			return BIT_2;
+		case Key::Z:
+		case Key::Down:
+			return BIT_3;
+		default:
+			return -1;
 	}
 }
 

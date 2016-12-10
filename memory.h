@@ -25,7 +25,8 @@ class Memory
 			BGP, ZBP0, ZBP1, WY, WX,
 			IF, IE;
 
-		Byte joypad_input;
+		Byte joypad_buttons;
+		Byte joypad_arrows;
 
 		Memory::Memory();
 		void reset();

@@ -58,7 +58,9 @@ void Memory::reset()
 	IF.set(0x00);
 	IE.set(0x00);
 
-	joypad_input = 0xFF;
+	// Initialize input to HIGH state (unpressed)
+	joypad_buttons = 0xF;
+	joypad_arrows  = 0xF;
 }
 
 void Memory::load_rom(std::string location)
@@ -80,21 +82,21 @@ void Memory::do_dma_transfer()
 
 Byte Memory::get_joypad_state()
 {
-	Byte result = 0x00;
-	// Standard button press
-	if (P1.is_bit_set(BIT_4))
+	Byte request = P1.get();
+	Byte state = 0;
+
+	// Requesting button state
+	if (is_bit_set(request, BIT_4))
 	{
-		result = joypad_input >> 4;
-		result |= P1.get();
+		state = joypad_buttons;
 	}
-	// Directional button press
-	else if (P1.is_bit_set(BIT_5))
+	// Requesting direcitonal state
+	else if (is_bit_set(request, BIT_5))
 	{
-		result = joypad_input & 0xF;
-		result |= P1.get();
+		state = joypad_arrows;
 	}
 
-	return result;
+	return state;
 }
 
 Byte Memory::read(Address location)
@@ -149,8 +151,6 @@ Byte Memory::read(Address location)
 			case 0xF00:
 				if (location == 0xFF00)
 					return get_joypad_state();
-				if (location == 0xFF04)
-					return 2;
 				else
 					return ZRAM[location & 0xFF];
 		}
@@ -228,7 +228,7 @@ void Memory::write_zero_page(Address location, Byte data)
 	{
 	// Joypad Register - only bits 4 & 5 can be written to
 	case 0xFF00:
-		ZRAM[0x00] = (data | (P1.get() & 0xCF));
+		ZRAM[0x00] = (data & 0x30);
 		break;
 	// Divider Register - Write as zero no matter content
 	case 0xFF04:
