@@ -98,7 +98,7 @@ void Emulator::key_pressed(Key key)
 	else
 		memory.joypad_buttons = clear_bit(joypad, key_id);
 
-	cout << "set key " << key_id << endl;
+	//cout << "set key " << key_id << endl;
 
 	request_interrupt(INTERRUPT_JOYPAD);
 }
@@ -128,7 +128,7 @@ void Emulator::key_released(Key key)
 	else
 		memory.joypad_buttons = set_bit(joypad, key_id);
 
-	cout << "reset key " << key_id << endl;
+	//cout << "reset key " << key_id << endl;
 }
 
 int Emulator::get_key_id(Key key)

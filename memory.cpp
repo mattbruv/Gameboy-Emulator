@@ -83,20 +83,20 @@ void Memory::do_dma_transfer()
 Byte Memory::get_joypad_state()
 {
 	Byte request = P1.get();
-	Byte state = 0;
 
-	// Requesting button state
-	if (is_bit_set(request, BIT_4))
+	switch (request)
 	{
-		state = joypad_buttons;
+		case 0x10:
+			cout << "read buttons" << endl;
+			cout << "A is " << (is_bit_set(joypad_buttons, BIT_0) ? "SET" : "UNSET") << endl;
+			return joypad_buttons;
+		case 0x20:
+			cout << "read direction" << endl;
+			return joypad_arrows;
+		default:
+			cout << "SOMETHING ELSE" << endl;
+			return 0xE;
 	}
-	// Requesting direcitonal state
-	else if (is_bit_set(request, BIT_5))
-	{
-		state = joypad_arrows;
-	}
-
-	return state;
 }
 
 Byte Memory::read(Address location)
