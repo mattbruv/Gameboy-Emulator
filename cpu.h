@@ -90,10 +90,13 @@ class CPU
 		// 16-bit arithmetic
 		void ADD16(Byte_2 target, Byte_2 value);
 		void ADDHL(Pair reg_pair);
+		void ADDHLSP();
 		void ADDSP(Byte value);
 
 		void INC(Pair reg_pair);
+		void INCSP();
 		void DEC(Pair reg_pair);
+		void DECSP();
 
 		// Rotate shift instructions
 		void RL(Byte& target, bool carry, bool zero_flag = false);

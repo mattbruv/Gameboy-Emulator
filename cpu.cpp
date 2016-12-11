@@ -239,7 +239,7 @@ void CPU::XOR(Byte& target, Byte value)
 void CPU::XOR(Byte& target, Address addr)
 {
 	Byte val = memory->read(addr);
-	OR(target, val);
+	XOR(target, val);
 }
 
 // Compare A with n. This is basically a A - n subtraction but the results are thrown away
@@ -314,6 +314,14 @@ void CPU::ADDHL(Pair reg_pair)
 	Pair(reg_H, reg_L).set(result);
 }
 
+void CPU::ADDHLSP()
+{
+	Byte high = high_byte(reg_SP);
+	Byte low = low_byte(reg_SP);
+
+	ADDHL(Pair(high, low));
+}
+
 void CPU::ADDSP(Byte value)
 {
 	ADD16(reg_SP, value);
@@ -326,9 +334,19 @@ void CPU::INC(Pair reg_pair)
 	reg_pair.set(reg_pair.get() + 1); // manual says flags are unchanged
 }
 
+void CPU::INCSP()
+{
+	reg_SP++;
+}
+
 void CPU::DEC(Pair reg_pair)
 {
 	reg_pair.set(reg_pair.get() - 1); // manual says flags are unchanged
+}
+
+void CPU::DECSP()
+{
+	reg_SP--;
 }
 
 // Rotate Shift Instructions
@@ -421,6 +439,9 @@ void CPU::SRL(Address addr)
 void CPU::SWAP(Byte& target)
 {
 	target = ((target >> 4) | (target << 4));
+	set_flag(FLAG_CARRY, false);
+	set_flag(FLAG_HALF_CARRY, false);
+	set_flag(FLAG_SUB, false);
 	set_flag(FLAG_ZERO, (target == 0));
 }
 

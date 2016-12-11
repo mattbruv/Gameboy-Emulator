@@ -483,16 +483,16 @@ void CPU::parse_opcode(Opcode code)
 		case 0x09: ADDHL(Pair(reg_B, reg_C)); op(1, 2); break;
 		case 0x19: ADDHL(Pair(reg_D, reg_E)); op(1, 2); break;
 		case 0x29: ADDHL(Pair(reg_H, reg_L)); op(1, 2); break;
-		case 0x39: ADDHL(Pair(reg_A, reg_F)); op(1, 2); break;
+		case 0x39: ADDHLSP();                 op(1, 2); break;
 		case 0xE8: ADDSP(value); op(2, 4); break;
 		case 0x03: INC(Pair(reg_B, reg_C)); op(1, 2); break;
 		case 0x13: INC(Pair(reg_D, reg_E)); op(1, 2); break;
 		case 0x23: INC(Pair(reg_H, reg_L)); op(1, 2); break;
-		case 0x33: INC(Pair(reg_A, reg_F)); op(1, 2); break;
+		case 0x33: INCSP();                 op(1, 2); break;
 		case 0x0B: DEC(Pair(reg_B, reg_C)); op(1, 2); break;
 		case 0x1B: DEC(Pair(reg_D, reg_E)); op(1, 2); break;
 		case 0x2B: DEC(Pair(reg_H, reg_L)); op(1, 2); break;
-		case 0x3B: DEC(Pair(reg_A, reg_F)); op(1, 2); break;
+		case 0x3B: DECSP();                 op(1, 2); break;
 		// 98
 		case 0x07: RL(reg_A, true);  op(1, 1); break; // manual shows the logic switched for these functions
 		case 0x17: RL(reg_A, false); op(1, 1); break; // implementation matches expected output for these two

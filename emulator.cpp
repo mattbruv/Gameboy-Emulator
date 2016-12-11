@@ -43,6 +43,7 @@ void Emulator::run(int total_iterations)
 		current_cycle = 0;
 
 		int frame_time = time.asMilliseconds();
+
 		float sleep_time = time_between_frames - frame_time;
 		if (frame_time < time_between_frames)
 			sf::sleep(sf::milliseconds(sleep_time));
@@ -372,7 +373,7 @@ void Emulator::update_scanline(int cycles)
 
 		// Entered VBLANK period
 		if (current_scanline == 144)
-			request_interrupt(0);
+			request_interrupt(INTERRUPT_VBLANK);
 		// Reset counter if past maximum
 		else if (current_scanline > 153)
 			memory.LY.clear();
