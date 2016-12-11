@@ -384,7 +384,13 @@ void CPU::parse_opcode(Opcode code)
 		case 0xC1: POP(reg_B, reg_C); op(1, 3); break;
 		case 0xD1: POP(reg_D, reg_E); op(1, 3); break;
 		case 0xE1: POP(reg_H, reg_L); op(1, 3); break;
-		case 0xF1: POP(reg_A, reg_F); op(1, 3); break;
+		case 0xF1:
+			POP(reg_A, reg_F);
+			// After failing tests, apparently lower 4 bits of register F
+			// and only F are always zero after this. why? who knows
+			reg_F &= 0xF0;
+			op(1, 3);
+			break;
 		case 0xF8: LDHL(value); op(2, 3); break;
 		case 0x08: LDNN(value, value2); op(3, 5); break;
 		// 92
@@ -544,7 +550,7 @@ void CPU::parse_opcode(Opcode code)
 		case 0xF3: DI(); op(1, 1); break; // Disable interrupts
 		case 0xFB: EI(); op(1, 1); break; // Enable interrupts
 		// 112
-		// case 0x76: HALT(); op(1, 1); break; // UNIMPLEMENTED
+		case 0x76: HALT(); op(1, 1); break; // UNIMPLEMENTED
 		// case 0x10: STOP(); op(2, 1); break; // UNIMPLEMENTED
 
 		// case 0x37: SCF(); // GBCPUman says that this sets carry flag, resets N & H, Z not affected

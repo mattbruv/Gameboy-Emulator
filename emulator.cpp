@@ -45,8 +45,8 @@ void Emulator::run(int total_iterations)
 		int frame_time = time.asMilliseconds();
 
 		float sleep_time = time_between_frames - frame_time;
-		if (frame_time < time_between_frames)
-			sf::sleep(sf::milliseconds(sleep_time));
+		//if (frame_time < time_between_frames)
+		//	sf::sleep(sf::milliseconds(sleep_time));
 		time = time.Zero;
 
 	}

@@ -245,8 +245,8 @@ void Memory::write_zero_page(Address location, Byte data)
 		ZRAM[0x46] = data;
 		do_dma_transfer();
 		break;
-	case 0xFF80: // temporary patch for tetris
-		break;
+	//case 0xFF80: // temporary patch for tetris
+	//	break;
 	default:
 		ZRAM[location & 0xFF] = data;
 		break;
