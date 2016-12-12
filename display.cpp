@@ -4,8 +4,10 @@ void Display::init(Memory* _memory)
 {
 	memory = _memory;
 
+	int scale = 1;
+	
 	window.create(sf::VideoMode(width, height), "Gameboy Emulator");
-	window.setSize(sf::Vector2u(width * 3, height * 3));
+	window.setSize(sf::Vector2u(width * scale, height * scale));
 	window.setKeyRepeatEnabled(false);
 
 	bg_array.create(160, 144, sf::Color(255, 0, 255));
@@ -112,16 +114,11 @@ void Display::render_sprites()
 		Byte y_pos   = memory->read(offset) - 16;
 		Byte x_pos   = memory->read(offset + 1) - 8;
 
-		if (y_pos == 0 || y_pos >= 160)
+		if (y_pos >= 160)
 			continue;
 
 		Byte tile_id = memory->read(offset + 2);
 		Byte flags   = memory->read(offset + 3);
-
-		
-
-		//if (x_pos == 0 || x_pos >= 168)
-		//	continue;
 
 		render_sprite_tile(x_pos, y_pos, tile_id);
 	}
@@ -158,19 +155,25 @@ sf::Color Display::get_pixel_color(Byte top, Byte bottom, int bit, bool is_sprit
 
 	Byte color_code = (second << 1) | first;
 
-	switch (color_code)
-	{
-		case 0b11: return sf::Color(8, 24, 32);
-		case 0b01: return sf::Color(48, 104, 80);
-		case 0b10: return sf::Color(136, 192, 112);
-		case 0b00: return sf::Color(224, 248, 208, ((is_sprite) ? 0 : 255));
-		/*
-		case 0b11: return sf::Color(0, 0, 0);
-		case 0b10: return sf::Color(85, 85, 85);
-		case 0b01: return sf::Color(170, 170, 170);
-		case 0b00: return sf::Color(255, 255, 255);
-		*/
-		default:   return sf::Color(0, 0, 255);
+	if (emulate_pallete) {
+		switch (color_code)
+		{
+			case 0b11: return sf::Color(8, 24, 32);
+			case 0b01: return sf::Color(48, 104, 80);
+			case 0b10: return sf::Color(136, 192, 112);
+			case 0b00: return sf::Color(224, 248, 208, ((is_sprite) ? 0 : 255));
+			default:   return sf::Color(0, 0, 255);
+		}
+	}
+	else {
+		switch (color_code)
+		{
+			case 0b11: return sf::Color(0, 0, 0);
+			case 0b01: return sf::Color(127, 127, 127);
+			case 0b10: return sf::Color(198, 198, 198);
+			case 0b00: return sf::Color(255, 255, 255);
+			default:   return sf::Color(0, 0, 255);
+		}
 	}
 }
 

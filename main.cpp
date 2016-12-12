@@ -6,7 +6,7 @@ int main(int argc, char *args[])
 {
 	Emulator emulator;
 
-	string name = "04-op r,imm";
+	string name = "11-op a,(hl)";
 
 	//emulator.memory.load_rom("tests/" + name + ".gb");
 	emulator.memory.load_rom("tetris.gb");

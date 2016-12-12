@@ -387,7 +387,7 @@ void CPU::parse_opcode(Opcode code)
 		case 0xF1:
 			POP(reg_A, reg_F);
 			// After failing tests, apparently lower 4 bits of register F
-			// and only F are always zero after this. why? who knows
+			// (all flags) are set to zero.
 			reg_F &= 0xF0;
 			op(1, 3);
 			break;

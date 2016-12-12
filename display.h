@@ -18,6 +18,8 @@ class Display
 		int width = 160,
 			height = 144;
 
+		bool emulate_pallete = true;
+
 		void init(Memory* _memory);
 
 		void draw_scanline();

@@ -9,16 +9,16 @@ Emulator::Emulator()
 // Start emulation of CPU
 void Emulator::run()
 {
-	// CPU cycles to emulate per frame draw
-	float cycles_per_frame = cpu.CLOCK_SPEED / framerate;
-	float time_between_frames = 1000 / framerate;
-	// Current cycle in frame
-	int current_cycle = 0;
-
 	sf::Time time;
 
 	while(display.window.isOpen())
 	{
+		// CPU cycles to emulate per frame draw
+		float cycles_per_frame = cpu.CLOCK_SPEED / framerate;
+		float time_between_frames = 1000 / framerate;
+		// Current cycle in frame
+		int current_cycle = 0;
+
 		handle_events();
 
 		while (current_cycle < cycles_per_frame)
@@ -45,8 +45,8 @@ void Emulator::run()
 		int frame_time = time.asMilliseconds();
 
 		float sleep_time = time_between_frames - frame_time;
-		//if (frame_time < time_between_frames)
-		//	sf::sleep(sf::milliseconds(sleep_time));
+		if (frame_time < time_between_frames)
+			sf::sleep(sf::milliseconds(sleep_time));
 		time = time.Zero;
 
 	}
@@ -76,6 +76,16 @@ void Emulator::handle_events()
 
 void Emulator::key_pressed(Key key)
 {
+	if (key == Key::P)
+	{
+		display.emulate_pallete = !display.emulate_pallete;
+	}
+	
+	if (key == Key::Space)
+	{
+		cpu.CLOCK_SPEED *= 100;
+	}
+
 	int key_id = get_key_id(key);
 
 	if (key_id < 0)
@@ -99,13 +109,16 @@ void Emulator::key_pressed(Key key)
 	else
 		memory.joypad_buttons = clear_bit(joypad, key_id);
 
-	//cout << "set key " << key_id << endl;
-
 	request_interrupt(INTERRUPT_JOYPAD);
 }
 
 void Emulator::key_released(Key key)
 {
+	if (key == Key::Space)
+	{
+		cpu.CLOCK_SPEED /= 100;
+	}
+
 	int key_id = get_key_id(key);
 
 	if (key_id < 0)
@@ -128,8 +141,6 @@ void Emulator::key_released(Key key)
 		memory.joypad_arrows = set_bit(joypad, key_id);
 	else
 		memory.joypad_buttons = set_bit(joypad, key_id);
-
-	//cout << "reset key " << key_id << endl;
 }
 
 int Emulator::get_key_id(Key key)

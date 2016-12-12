@@ -18,7 +18,7 @@ class CPU
 		Byte_2 reg_SP; // Stack Pointer
 		Byte_2 reg_PC; // Program Counter
 
-		const int CLOCK_SPEED = 4194304; // 4194304 Hz CPU speed
+		int CLOCK_SPEED = 4194304; // 4194304 Hz CPU speed
 		int num_cycles = 0;
 		bool interrupt_master_enable = false;
 		Address last_fn_call;

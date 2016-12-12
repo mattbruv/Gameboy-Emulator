@@ -460,7 +460,13 @@ void CPU::SRL(Address addr)
 // swap high nibble with low nibble
 void CPU::SWAP(Byte& target)
 {
-	target = ((target >> 4) | (target << 4));
+	Byte first = target >> 4;
+	Byte second = target << 4;
+
+	Byte swapped = first | second;
+
+	target = swapped;
+
 	set_flag(FLAG_CARRY, false);
 	set_flag(FLAG_HALF_CARRY, false);
 	set_flag(FLAG_SUB, false);
