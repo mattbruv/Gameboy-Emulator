@@ -92,15 +92,15 @@ void CPU::LD(Byte_2& reg_pair, Byte upper, Byte lower)
 void CPU::LDHL(Byte value)
 {
 	// value = -128 to + 127, could this mean that we make this signed and then add?
-	Byte_Signed signed_val = (Byte_Signed) value;
-	int result = reg_SP + signed_val;
+	Byte_2_Signed signed_val = (Byte_2_Signed) (Byte_Signed) value;
+	Byte_2 result = (Byte_2) ((Byte_2_Signed) reg_SP + signed_val);
 
+	set_flag(FLAG_CARRY, (result & 0xFF) < (reg_SP & 0xFF)); // set if carry from bit 15
+	set_flag(FLAG_HALF_CARRY, (result & 0xF) < (reg_SP & 0xF)); // set if carry from bit 11
 	set_flag(FLAG_ZERO, false); // reset
 	set_flag(FLAG_SUB, false); // reset
-	set_flag(FLAG_HALF_CARRY, ((((reg_SP & 0xFFF) + (signed_val & 0xFFF)) & 0x1000) != 0)); // set if carry from bit 11
-	set_flag(FLAG_CARRY, (result > 0xFFFF)); // set if carry from bit 15
 
-	Pair(reg_H, reg_L).set(reg_SP + signed_val);
+	Pair(reg_H, reg_L).set(result);
 }
 
 void CPU::LDNN(Byte low, Byte high)
@@ -132,15 +132,14 @@ void CPU::POP(Byte& high, Byte& low)
 
 void CPU::ADD(Byte& target, Byte value)
 {
-	int result = target + value;
-	Byte real_result = target + value;
+	Byte_2 result = (Byte_2) target + (Byte_2) value;
 
-	set_flag(FLAG_ZERO, (real_result == 0)); // set if result is 0
-	set_flag(FLAG_SUB, false); // reset
-	set_flag(FLAG_HALF_CARRY, ((((target & 0xF) + (value & 0xF)) & 0x10) != 0)); // Set if carry from bit 3
-	set_flag(FLAG_CARRY, (result > 0xFF)); // Set if carry from bit 7
+	set_flag(FLAG_HALF_CARRY, ((target & 0xF) + (value & 0xF)) > 0xF);
+	set_flag(FLAG_CARRY, (result > 0xFF));
+	set_flag(FLAG_ZERO, (result & 0xFF) == 0);
+	set_flag(FLAG_SUB, false);
 
-	target = real_result;
+	target = (result & 0xFF);
 }
 
 void CPU::ADD(Byte& target, Address addr)
@@ -151,9 +150,15 @@ void CPU::ADD(Byte& target, Address addr)
 
 void CPU::ADC(Byte& target, Byte value)
 {
-	int carry = (reg_F & FLAG_CARRY) ? 1 : 0;
-	ADD(target, value);
-	target += carry;
+	Byte_2 carry = (reg_F & FLAG_CARRY) ? 1 : 0;
+	Byte_2 result = (Byte_2) target + (Byte_2) value + carry;
+
+	set_flag(FLAG_HALF_CARRY, ((target & 0x0F) + (value & 0xF) + (Byte) carry) > 0x0F);
+	set_flag(FLAG_CARRY, (result > 0xFF));
+	set_flag(FLAG_ZERO, (result & 0xFF) == 0);
+	set_flag(FLAG_SUB, false);
+
+	target = (result & 0xFF);
 }
 
 void CPU::ADC(Byte& target, Address addr)
@@ -164,15 +169,17 @@ void CPU::ADC(Byte& target, Address addr)
 
 void CPU::SUB(Byte& target, Byte value)
 {
-	int result = target - value;
-	Byte real_result = target - value;
+	Byte_2_Signed result = (Byte_2_Signed)target - (Byte_2_Signed)value;
 
-	set_flag(FLAG_ZERO, (real_result == 0)); // set if result is zero
-	set_flag(FLAG_SUB, true); // set
-	set_flag(FLAG_HALF_CARRY, (((target & 0xF) - (value & 0xF)) < 0)); // set if borrow from bit 4
-	set_flag(FLAG_CARRY, (result < 0)); // set if borrow
+	Byte_2_Signed s_target = (Byte_2_Signed)target;
+	Byte_2_Signed s_value = (Byte_2_Signed)value;
 
-	target = real_result;
+	set_flag(FLAG_HALF_CARRY, (((s_target & 0xF) - (s_value & 0xF)) < 0));
+	set_flag(FLAG_CARRY, result < 0);
+	set_flag(FLAG_SUB, true);
+	set_flag(FLAG_ZERO, (result & 0xFF) == 0);
+
+	target = (Byte)(result & 0xFF);
 }
 
 void CPU::SUB(Byte& target, Address addr)
@@ -183,9 +190,18 @@ void CPU::SUB(Byte& target, Address addr)
 
 void CPU::SBC(Byte& target, Byte value)
 {
-	int carry = (reg_F & FLAG_CARRY) ? 1 : 0;
-	SUB(target, value);
-	target -= carry;
+	Byte_2 carry = (reg_F & FLAG_CARRY) ? 1 : 0;
+	Byte_2_Signed result = (Byte_2_Signed)target - (Byte_2_Signed)value - carry;
+
+	Byte_2_Signed s_target = (Byte_2_Signed)target;
+	Byte_2_Signed s_value = (Byte_2_Signed)value;
+
+	set_flag(FLAG_HALF_CARRY, (((s_target & 0xF) - (s_value & 0xF) - carry) < 0));
+	set_flag(FLAG_CARRY, result < 0);
+	set_flag(FLAG_SUB, true);
+	set_flag(FLAG_ZERO, (result & 0xFF) == 0);
+
+	target = (Byte) (result & 0xFF);
 }
 
 void CPU::SBC(Byte& target, Address addr)
@@ -324,9 +340,15 @@ void CPU::ADDHLSP()
 
 void CPU::ADDSP(Byte value)
 {
-	ADD16(reg_SP, value);
-	set_flag(FLAG_ZERO, false); // manual says to reset
-	reg_SP += value;
+	Byte_2_Signed val_signed = (Byte_2_Signed) (Byte_Signed) value;
+	Byte_2 result = (Byte_2) ((Byte_2_Signed) reg_SP + val_signed);
+
+	set_flag(FLAG_CARRY, (result & 0xFF) < (reg_SP & 0xFF));
+	set_flag(FLAG_HALF_CARRY, (result & 0xF) < (reg_SP & 0xF));
+	set_flag(FLAG_SUB, false);
+	set_flag(FLAG_ZERO, false);
+
+	reg_SP = result;
 }
 
 void CPU::INC(Pair reg_pair)
@@ -755,6 +777,5 @@ void CPU::EI()
 
 void CPU::debug()
 {
-	reg_SP = 0xFFF8;
-	parse_opcode(0xF8);
+	parse_opcode(0xE8);
 }

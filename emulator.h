@@ -12,7 +12,7 @@ class Emulator
 	public:
 
 		Emulator();
-		void run(int total_iterations);
+		void run();
 		CPU cpu;
 		Memory memory;
 		Display display;

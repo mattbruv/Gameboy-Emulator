@@ -7,7 +7,7 @@ Emulator::Emulator()
 }
 
 // Start emulation of CPU
-void Emulator::run(int total_iterations)
+void Emulator::run()
 {
 	// CPU cycles to emulate per frame draw
 	float cycles_per_frame = cpu.CLOCK_SPEED / framerate;
