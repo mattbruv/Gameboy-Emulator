@@ -68,6 +68,68 @@ void Memory::load_rom(std::string location)
 	ifstream input(location, ios::binary);
 	vector<Byte> buffer((istreambuf_iterator<char>(input)), (istreambuf_iterator<char>()));
 	CART_ROM = buffer;
+
+	// print cartrige data
+	string title = "";
+
+	for (int i = 0x0134; i <= 0x142; i++)
+	{
+		Byte character = read(i);
+		if (character == 0)
+			break;
+		else
+			title.push_back(character);
+	}
+
+	cout << "Title: " << title << endl;
+	Byte gb_type = read(0x0143);
+	cout << "Gameboy Type: " << ((gb_type == 0x80) ? "GB Color" : "GB") << endl;
+	Byte functions = read(0x0146);
+	cout << "Use " << ((functions == 0x3) ? "Super " : "") << "Gameboy functions" << endl;
+
+	string cart_types[0x100];
+	cart_types[0x0] = "ROM ONLY";
+	cart_types[0x1] = "ROM+MBC1";
+	cart_types[0x2] = "ROM+MBC1+RAM";
+	cart_types[0x3] = "ROM+MBC1+RAM+BATT";
+	cart_types[0x5] = "ROM+MBC2";
+	cart_types[0x6] = "ROM+MBC2+BATTERY";
+	cart_types[0x8] = "ROM+RAM";
+	cart_types[0x9] = "ROM+RAM+BATTERY";
+	cart_types[0xB] = "ROM+MMM01";
+	cart_types[0xC] = "ROM+MMM01+SRAM";
+	cart_types[0xD] = "ROM+MMM01+SRAM+BATT";
+	cart_types[0xF] = "ROM+MBC3+TIMER+BATT";
+	cart_types[0x10] = "ROM+MBC3+TIMER+RAM+BATT";
+	cart_types[0x11] = "ROM+MBC3";
+	cart_types[0x12] = "ROM+MBC3+RAM";
+	cart_types[0x13] = "ROM+MBC3+RAM+BATT";
+	cart_types[0x19] = "ROM+MBC5";
+	cart_types[0x1A] = "ROM+MBC5+RAM";
+	cart_types[0x1B] = "ROM+MBC5+RAM+BATT";
+	cart_types[0x1C] = "ROM+MBC5+RUMBLE";
+	cart_types[0x1D] = "ROM+MBC5+RUMBLE+SRAM";
+	cart_types[0x1E] = "ROM+MBC5+RUMBLE+SRAM+BATT";
+	cart_types[0x1F] = "Pocket Camera";
+	cart_types[0xFD] = "Bandai TAMA5";
+	cart_types[0xFE] = "Hudson HuC-3";
+	cart_types[0xFF] = "Hudson HuC-1";
+
+	Byte cart = read(0x0147);
+	cout << "Cartridge Type: " << cart_types[cart] << endl;
+	Byte rsize = read(0x0148);
+	cout << "ROM Size: " << (32 * (pow(2, rsize))) << "kB " << pow(2, rsize + 1) << " banks" << endl;
+	int size, banks;
+	switch (read(0x149))
+	{
+		case 1: size = 2; banks = 1;
+		case 2: size = 8; banks = 1;
+		case 3: size = 32; banks = 4;
+		case 4: size = 128; banks = 16;
+		default: size = 0; banks = 0;
+	}
+	cout << "RAM Size: " << size << "kB " << banks << " banks" << endl;
+	cout << "Destination Code: " << (read(0x014A) == 1 ? "Non-" : "") << "Japanese" << endl;
 }
 
 void Memory::do_dma_transfer()

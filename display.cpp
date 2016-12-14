@@ -4,7 +4,7 @@ void Display::init(Memory* _memory)
 {
 	memory = _memory;
 
-	int scale = 1;
+	int scale = 4;
 	
 	window.create(sf::VideoMode(width, height), "Gameboy Emulator");
 	window.setSize(sf::Vector2u(width * scale, height * scale));
@@ -16,6 +16,9 @@ void Display::init(Memory* _memory)
 
 void Display::render()
 {
+	if (!is_lcd_enabled())
+		return;
+
 	window.clear(sf::Color::Transparent);
 
 	// clear existig sprite data
@@ -44,20 +47,13 @@ void Display::render_background()
 	// LCDC variables
 	bool bg_enabled = memory->LCDC.is_bit_set(BIT_0);
 
-	bool obj_enabled = memory->LCDC.is_bit_set(BIT_1);
+	bool obj_enabled   = memory->LCDC.is_bit_set(BIT_1);
 	bool obj_selection = memory->LCDC.is_bit_set(BIT_2);
 
-	bool bg_code_area = memory->LCDC.is_bit_set(BIT_3);
-	bool bg_char_selection = memory->LCDC.is_bit_set(BIT_4);
+	bool bg_code_area      = memory->LCDC.is_bit_set(BIT_3);
 
-	bool window_enabled = memory->LCDC.is_bit_set(BIT_5);
+	bool window_enabled   = memory->LCDC.is_bit_set(BIT_5);
 	bool window_code_area = memory->LCDC.is_bit_set(BIT_6);
-
-	bool lcd_enabled = is_lcd_enabled();
-
-	// return if the display is not enabled
-	if (!lcd_enabled)
-		return;
 
 	Address tile_map = (bg_code_area) ? 0x9C00 : 0x9800;
 	Byte scroll_x = memory->SCX.get();
@@ -73,20 +69,43 @@ void Display::render_background()
 		int result = mod + (y * 32);
 
 		result += tile_map;
-		int tile_id = memory->read(result);
+		Byte tile_id = memory->read(result);
 		render_bg_tile(map, tile_id);
 
 	}
 }
 
-void Display::render_bg_tile(int display_number, int tile_id)
+void Display::render_bg_tile(int display_number, Byte tile_id)
 {
+	bool bg_char_selection = memory->LCDC.is_bit_set(BIT_4);
+	
 	// Figure out where the current background character data is being stored
-	Address bg_data_location = 0x8000; // TODO: set via LCDC register
+	// if selection=0 bg area is 0x8800-0x97FF and tile ID is determined by SIGNED -128 to 127
+	// 0x9000 represents the zero ID address in that range
+	Address bg_data_location = (bg_char_selection) ? 0x8000 : 0x9000;
 
 	for (int y = 0; y < 8; y++)
 	{
-		int offset = (tile_id * 16) + bg_data_location;
+		Address offset;
+
+		// 0x8000 - 0x8FFF unsigned 
+		if (bg_char_selection)
+		{
+			offset = (tile_id * 16) + bg_data_location;
+		}
+		// 0x8800 - 0x97FF signed
+		else
+		{
+			Byte_Signed direction = (Byte_Signed) tile_id;
+
+			if (direction < 0)
+			{
+				int something = 0;
+			}
+
+			Byte_2_Signed temp_offset = ((Byte_2_Signed)bg_data_location) + direction;
+			offset = (Address) temp_offset;
+		}
 
 		Byte
 			high = memory->read(offset + (y * 2)),
@@ -124,7 +143,7 @@ void Display::render_sprites()
 	}
 }
 
-void Display::render_sprite_tile(int start_x, int start_y, int tile_id)
+void Display::render_sprite_tile(int start_x, int start_y, Byte tile_id)
 {
 	Address sprite_data_location = 0x8000;
 

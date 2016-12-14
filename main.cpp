@@ -9,7 +9,7 @@ int main(int argc, char *args[])
 	string name = "11-op a,(hl)";
 
 	//emulator.memory.load_rom("tests/" + name + ".gb");
-	emulator.memory.load_rom("tetris.gb");
+	emulator.memory.load_rom("roms/tetris.gb");
 
 	//emulator.cpu.debug();
 	emulator.run();
