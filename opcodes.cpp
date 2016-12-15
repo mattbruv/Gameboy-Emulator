@@ -37,8 +37,9 @@ void CPU::parse_bit_op(Opcode code)
 		case 0x1B: RR(reg_E, true, true); op(2, 2); break;
 		case 0x1C: RR(reg_H, true, true); op(2, 2); break;
 		case 0x1D: RR(reg_L, true, true); op(2, 2); break;
-		case 0x1E: RR(Pair(reg_H, reg_L).address(), false); op(2, 4); break; // this could have a different beginning opcode, check manual
+		case 0x1E: RR(Pair(reg_H, reg_L).address(), true); op(2, 4); break; // this could have a different beginning opcode, check manual
 
+		/* BUGGED */
 		case 0x27: SLA(reg_A); op(2, 2); break;
 		case 0x20: SLA(reg_B); op(2, 2); break;
 		case 0x21: SLA(reg_C); op(2, 2); break;
@@ -48,6 +49,7 @@ void CPU::parse_bit_op(Opcode code)
 		case 0x25: SLA(reg_L); op(2, 2); break;
 		case 0x26: SLA(Pair(reg_H, reg_L).address()); op(2, 4); break; // this could actually have a different beginning opcode, check manual
 
+		/* BUGGED */
 		case 0x2F: SRA(reg_A); op(2, 2); break;
 		case 0x28: SRA(reg_B); op(2, 2); break;
 		case 0x29: SRA(reg_C); op(2, 2); break;
@@ -57,6 +59,7 @@ void CPU::parse_bit_op(Opcode code)
 		case 0x2D: SRA(reg_L); op(2, 2); break;
 		case 0x2E: SRA(Pair(reg_H, reg_L).address()); op(2, 4); break;
 
+		/* BUGGED */
 		case 0x3F: SRL(reg_A); op(2, 2); break;
 		case 0x38: SRL(reg_B); op(2, 2); break;
 		case 0x39: SRL(reg_C); op(2, 2); break;
@@ -500,9 +503,9 @@ void CPU::parse_opcode(Opcode code)
 		case 0x2B: DEC(Pair(reg_H, reg_L)); op(1, 2); break;
 		case 0x3B: DECSP();                 op(1, 2); break;
 		// 98
-		case 0x07: RL(reg_A, true);  op(1, 1); break; // manual shows the logic switched for these functions
-		case 0x17: RL(reg_A, false); op(1, 1); break; // implementation matches expected output for these two
-		case 0x0F: RR(reg_A, false); op(1, 1); break; // implementation matches expected output when these two instructions are switched
+		case 0x07: RL(reg_A, true);  op(1, 1); break; // RLCA
+		case 0x17: RL(reg_A, false); op(1, 1); break; // RLA
+		case 0x0F: RR(reg_A, false); op(1, 1); break;
 		case 0x1F: RR(reg_A, true);  op(1, 1); break;
 		// 99 - 104
 		case 0xCB: parse_bit_op(value); break;
@@ -550,10 +553,12 @@ void CPU::parse_opcode(Opcode code)
 		case 0xF3: DI(); op(1, 1); break; // Disable interrupts
 		case 0xFB: EI(); op(1, 1); break; // Enable interrupts
 		// 112
-		case 0x76: HALT(); op(1, 1); break; // UNIMPLEMENTED
+		case 0x76: HALT(); op(1, 1); break;
 		// case 0x10: STOP(); op(2, 1); break; // UNIMPLEMENTED
 
-		// case 0x37: SCF(); // GBCPUman says that this sets carry flag, resets N & H, Z not affected
+		// Pandocs
+		case 0x37: SCF(); op(1, 1); break;
+		case 0x3F: CCF(); op(1, 1); break;
 
 		default: op(1, 0); break;
 	}

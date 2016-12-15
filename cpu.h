@@ -20,7 +20,8 @@ class CPU
 
 		int CLOCK_SPEED = 4194304; // 4194304 Hz CPU speed
 		int num_cycles = 0;
-		bool interrupt_master_enable = false;
+		bool interrupt_master_enable = true;
+		bool halted = false;
 		Address last_fn_call;
 
 		void init(Memory* _memory);
@@ -99,6 +100,10 @@ class CPU
 		void DECSP();
 
 		// Rotate shift instructions
+
+		void ROTATE_LEFT(Byte& target, bool do_carry);
+
+		// old...
 		void RL(Byte& target, bool carry, bool zero_flag = false);
 		void RL(Address addr, bool carry);
 		void RR(Byte& target, bool carry, bool zero_flag = false);
@@ -123,6 +128,9 @@ class CPU
 
 		void RES(Byte& target, int bit);
 		void RES(Address addr, int bit);
+
+		void SCF();
+		void CCF();
 
 		// Jump instructions
 		void JP(Pair target);

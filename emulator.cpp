@@ -27,7 +27,6 @@ void Emulator::run()
 
 			if (cpu.reg_PC == 0x282A) {
 				bool breakpoint = true;
-				display.render();
 			}
 
 			cpu.parse_opcode(code);
@@ -258,6 +257,12 @@ void Emulator::do_interrupts()
 				{
 					if (memory.IE.is_bit_set(i))
 					{
+						if (cpu.halted)
+						{
+							cpu.halted = false;
+							cpu.reg_PC += 1;
+						}
+
 						service_interrupt(i);
 					}
 				}
@@ -277,11 +282,11 @@ void Emulator::service_interrupt(Byte id)
 
 	switch (id)
 	{
-	case INTERRUPT_VBLANK: cpu.reg_PC = 0x40; break;
-	case INTERRUPT_LCDC:   cpu.reg_PC = 0x48; break;
-	case INTERRUPT_TIMER:  cpu.reg_PC = 0x50; break;
-	case INTERRUPT_SERIAL: cpu.reg_PC = 0x58; break;
-	case INTERRUPT_JOYPAD: cpu.reg_PC = 0x60; break;
+		case INTERRUPT_VBLANK: cpu.reg_PC = 0x40; break;
+		case INTERRUPT_LCDC:   cpu.reg_PC = 0x48; break;
+		case INTERRUPT_TIMER:  cpu.reg_PC = 0x50; break;
+		case INTERRUPT_SERIAL: cpu.reg_PC = 0x58; break;
+		case INTERRUPT_JOYPAD: cpu.reg_PC = 0x60; break;
 	}
 }
 

@@ -373,6 +373,26 @@ void CPU::DECSP()
 
 // Rotate Shift Instructions
 
+void CPU::ROTATE_LEFT(Byte& target, bool do_carry)
+{
+	bool next_carry = is_bit_set(target, BIT_7);
+	bool current_carry = ((reg_F & FLAG_CARRY) > 0) ? 1 : 0;
+
+	Byte result = target << 1;
+
+	if (do_carry)
+		result |= (current_carry) ? 1 : 0;
+	else
+		result |= target >> 7;
+
+	target = result;
+
+	set_flag(FLAG_CARRY, next_carry);
+	set_flag(FLAG_HALF_CARRY, false);
+	set_flag(FLAG_SUB, false);
+	set_flag(FLAG_ZERO, result == 0);
+}
+
 // Rotate 1-bit Left
 void CPU::RL(Byte& target, bool carry, bool zero_flag)
 {
@@ -636,8 +656,8 @@ void CPU::RET()
 
 void CPU::RETI()
 {
-	RET();
 	interrupt_master_enable = true;
+	RET();
 }
 
 void CPU::RETNZ()
@@ -687,6 +707,8 @@ void CPU::RST(Address addr)
 // Decimal Adjust Accumulator
 // Binary coded decimal representation is used to set the contents of
 // Register A to a binary coded decimal number
+// confusing af, referenced wadatsumi emulator after my implementation failed tests
+// will come back and try to understand this fully
 void CPU::DAA()
 {
 	Byte high = high_nibble(reg_A);
@@ -696,54 +718,26 @@ void CPU::DAA()
 	bool carry = ((reg_F & FLAG_CARRY) != 0);
 	bool half_carry = ((reg_F & FLAG_HALF_CARRY) != 0);
 
-	if (add) // ADD, ADDC
-	{
-		if (!carry && !half_carry && (between(high, 0x0, 0x8) && between(low, 0xA, 0xF)))
-			reg_A += 0x06;
+	Byte_2 result = (Byte_2) reg_A;
+	Byte_2 correction = (carry) ? 0x60 : 0x00;
 
-		else if (!carry && half_carry && (between(high, 0x0, 0x9) && between(low, 0x0, 0x3)))
-			reg_A += 0x06;
+	if (half_carry || (add) && ((result & 0x0F) > 9))
+		correction |= 0x06;
 
-		else if (!carry && !half_carry && (between(high, 0xA, 0xF) && between(low, 0x0, 0x9)))
-		{
-			reg_A += 0x60;
-			set_flag(FLAG_CARRY, true);
-		}
+	if (carry || (add) && (result > 0x99))
+		correction |= 0x60;
 
-		else if (!carry && !half_carry && (between(high, 0x9, 0xF) && between(low, 0xA, 0xF)))
-		{
-			reg_A += 0x66;
-			set_flag(FLAG_CARRY, true);
-		}
+	if (add)
+		result += correction;
+	else
+		result -= correction;
 
-		else if (!carry && half_carry && (between(high, 0xA, 0xF) && between(low, 0x0, 0x3)))
-		{
-			reg_A += 0x66;
-			set_flag(FLAG_CARRY, true);
-		}
+	if (((correction << 2) & 0x100) != 0)
+		set_flag(FLAG_CARRY, true);
 
-		else if (carry && !half_carry && (between(high, 0x0, 0x2) && between(low, 0x0, 0x9)))
-			reg_A += 0x60;
-
-		else if (carry && !half_carry && (between(high, 0x0, 0x2) && between(low, 0xA, 0xF)))
-			reg_A += 0x66;
-
-		else if (carry && half_carry && (between(high, 0x0, 0x3) && between(low, 0x0, 0x3)))
-			reg_A += 0x66;
-	}
-	else // SUB, SUBC
-	{
-		if (!carry && half_carry && (between(high, 0x0, 0x8) && between(low, 0x6, 0xF)))
-			reg_A += 0xFA;
-
-		else if (carry && !half_carry && (between(high, 0x7, 0xF) && between(low, 0x0, 0x9)))
-			reg_A += 0xA0;
-
-		else if (carry && half_carry && (between(high, 0x6, 0xF) && between(low, 0x6, 0xF)))
-			reg_A += 0x9A;
-	}
-
-	set_flag(FLAG_HALF_CARRY, false); // Questionable
+	set_flag(FLAG_HALF_CARRY, false);
+	reg_A = (Byte)(result & 0xFF);
+	set_flag(FLAG_ZERO, reg_A == 0);
 }
 
 void CPU::CPL()
@@ -751,6 +745,20 @@ void CPU::CPL()
 	reg_A = ~reg_A;
 	set_flag(FLAG_HALF_CARRY, true);
 	set_flag(FLAG_SUB, true);
+}
+
+void CPU::SCF()
+{
+	set_flag(FLAG_SUB, false);
+	set_flag(FLAG_HALF_CARRY, false);
+	set_flag(FLAG_CARRY, true);
+}
+
+void CPU::CCF()
+{
+	set_flag(FLAG_SUB, false);
+	set_flag(FLAG_HALF_CARRY, false);
+	set_flag(FLAG_CARRY, ((reg_F & FLAG_CARRY) ? 1 : 0) ^ 1);
 }
 
 void CPU::NOP()
@@ -763,8 +771,20 @@ void CPU::HALT()
 	// System clock stopped, HALT mode is entered
 	// Oscillator circuit and LCD controller continue to operate
 	// RAM unchanged
-
 	// HALT mode canceled by interrupt or reset signal
+
+	// emulate HALT by just simply repeating the instruction
+	// until interrupts are called
+	/*
+	if (!interrupt_master_enable) {
+		if (!halted)
+			halted = true;
+
+		if (halted)
+			op(-1, 1); // if halted, repeat the halt instruction until interrupt
+	}
+	/**/
+	// possibly skip next instruction here
 }
 
 void CPU::STOP()
