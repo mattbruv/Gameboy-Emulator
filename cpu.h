@@ -101,16 +101,20 @@ class CPU
 
 		// Rotate shift instructions
 
-		void ROTATE_LEFT(Byte& target, bool do_carry);
+		// Shift Left
+		void SL(Byte& target);
+		void SL(Address addr);
 
-		// old...
+		// Shift Right
+		void SR(Byte& target, bool include_top_bit);
+		void SR(Address addr, bool include_top_bit);
+
+		// Shifts through carry
 		void RL(Byte& target, bool carry, bool zero_flag = false);
 		void RL(Address addr, bool carry);
 		void RR(Byte& target, bool carry, bool zero_flag = false);
 		void RR(Address addr, bool carry);
 
-		void SLA(Byte& target);
-		void SLA(Address addr);
 		void SRA(Byte& target);
 		void SRA(Address addr);
 		void SRL(Byte& target);

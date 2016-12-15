@@ -4,7 +4,7 @@ void Display::init(Memory* _memory)
 {
 	memory = _memory;
 
-	int scale = 1;
+	int scale = 5;
 	
 	window.create(sf::VideoMode(width, height), "Gameboy Emulator");
 	window.setSize(sf::Vector2u(width * scale, height * scale));

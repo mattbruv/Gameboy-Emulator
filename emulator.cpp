@@ -244,25 +244,30 @@ void Emulator::request_interrupt(Byte id)
 
 void Emulator::do_interrupts()
 {
-	// If master flag is enabled
-	if (cpu.interrupt_master_enable)
+	// Resume CPU state if halted and interrupts are pending
+	if (memory.IF.get() > 0 && memory.IE.get() > 0)
 	{
-		// If there are any interrupts set
-		if (memory.IF.get() > 0)
+		if (cpu.halted)
 		{
-			// Loop through each bit and call interrupt for lowest . highest priority bits set
-			for (int i = 0; i < 5; i++)
-			{
-				if (memory.IF.is_bit_set(i))
-				{
-					if (memory.IE.is_bit_set(i))
-					{
-						if (cpu.halted)
-						{
-							cpu.halted = false;
-							cpu.reg_PC += 1;
-						}
+			cpu.halted = false;
+			cpu.reg_PC += 1;
+		}
+	}
 
+	// If there are any interrupts set
+	if (memory.IF.get() > 0)
+	{
+		// Loop through each bit and call interrupt for lowest . highest priority bits set
+		for (int i = 0; i < 5; i++)
+		{
+			if (memory.IF.is_bit_set(i))
+			{
+				if (memory.IE.is_bit_set(i))
+				{
+					// IME only disables the servicing of interrupts,
+					// not all interrupt functionality 
+					if (cpu.interrupt_master_enable)
+					{
 						service_interrupt(i);
 					}
 				}

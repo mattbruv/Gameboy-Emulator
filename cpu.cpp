@@ -373,26 +373,6 @@ void CPU::DECSP()
 
 // Rotate Shift Instructions
 
-void CPU::ROTATE_LEFT(Byte& target, bool do_carry)
-{
-	bool next_carry = is_bit_set(target, BIT_7);
-	bool current_carry = ((reg_F & FLAG_CARRY) > 0) ? 1 : 0;
-
-	Byte result = target << 1;
-
-	if (do_carry)
-		result |= (current_carry) ? 1 : 0;
-	else
-		result |= target >> 7;
-
-	target = result;
-
-	set_flag(FLAG_CARRY, next_carry);
-	set_flag(FLAG_HALF_CARRY, false);
-	set_flag(FLAG_SUB, false);
-	set_flag(FLAG_ZERO, result == 0);
-}
-
 // Rotate 1-bit Left
 void CPU::RL(Byte& target, bool carry, bool zero_flag)
 {
@@ -434,17 +414,51 @@ void CPU::RR(Address addr, bool carry)
 	memory->write(addr, value);
 }
 
-// same as shift left but bit 0 is reset
-void CPU::SLA(Byte& target)
+// Shift Left
+void CPU::SL(Byte& target)
 {
-	RL(target, true, true);
+	Byte result = target << 1;
+
+	set_flag(FLAG_CARRY, (target & 0x80) != 0);
+	set_flag(FLAG_HALF_CARRY, false);
+	set_flag(FLAG_SUB, false);
+	set_flag(FLAG_ZERO, (result == 0));
+
+	target = result;
 }
 
-void CPU::SLA(Address addr)
+void CPU::SL(Address addr)
 {
-	Byte value = memory->read(addr);
-	SLA(value);
-	memory->write(addr, value);
+	Byte data = memory->read(addr);
+	SL(data);
+	memory->write(addr, data);
+}
+
+// Shift Right
+void CPU::SR(Byte& target, bool include_top_bit)
+{
+	bool top_bit_set = is_bit_set(target, BIT_7);
+
+	Byte result;
+
+	if (include_top_bit)
+		result = (top_bit_set) ? ((target >> 1) | 0x80) : (target >> 1);
+	else
+		result = target >> 1;
+
+	set_flag(FLAG_CARRY, (target & 0x01) != 0);
+	set_flag(FLAG_HALF_CARRY, false);
+	set_flag(FLAG_SUB, false);
+	set_flag(FLAG_ZERO, (result == 0));
+
+	target = result;
+}
+
+void CPU::SR(Address addr, bool include_top_bit)
+{
+	Byte data = memory->read(addr);
+	SR(data, include_top_bit);
+	memory->write(addr, data);
 }
 
 // same as shift right but bit 7 is unchanged
@@ -775,15 +789,10 @@ void CPU::HALT()
 
 	// emulate HALT by just simply repeating the instruction
 	// until interrupts are called
-	/*
-	if (!interrupt_master_enable) {
-		if (!halted)
-			halted = true;
 
-		if (halted)
-			op(-1, 1); // if halted, repeat the halt instruction until interrupt
-	}
-	/**/
+	halted = true;
+	op(-1, 1); // if halted, repeat the halt instruction until interrupt
+
 	// possibly skip next instruction here
 }
 
