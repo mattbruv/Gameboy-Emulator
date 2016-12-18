@@ -629,8 +629,6 @@ void CPU::CALL(Byte low, Byte high)
 	memory->write(--reg_SP, high_byte(reg_PC));
 	memory->write(--reg_SP, low_byte(reg_PC));
 
-	last_fn_call = Pair(high, low).get();
-
 	JP(Pair(high, low));
 	op(0, 3);
 }

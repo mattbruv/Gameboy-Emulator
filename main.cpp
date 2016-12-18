@@ -6,11 +6,12 @@ int main(int argc, char *args[])
 {
 	Emulator emulator;
 
-	//string name = "09-op r,r";
-	string name = "cpu_instrs";
+	//string name = "CPU - PASSED/02-interrupts";
+	//string name = "instr_timing";
 
 	//emulator.memory.load_rom("tests/" + name + ".gb");
-	emulator.memory.load_rom("roms/Tetris.gb");
+	//emulator.memory.load_rom("roms/Dr. Mario.gb");
+	emulator.memory.load_rom("roms/tetris.gb");
 
 	emulator.run();
 

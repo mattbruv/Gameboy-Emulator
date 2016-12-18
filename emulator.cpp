@@ -244,19 +244,18 @@ void Emulator::request_interrupt(Byte id)
 
 void Emulator::do_interrupts()
 {
-	// Resume CPU state if halted and interrupts are pending
-	if (memory.IF.get() > 0 && memory.IE.get() > 0)
-	{
-		if (cpu.halted)
-		{
-			cpu.halted = false;
-			cpu.reg_PC += 1;
-		}
-	}
-
 	// If there are any interrupts set
 	if (memory.IF.get() > 0)
 	{
+		// Resume CPU state if halted and interrupts are pending
+		if (memory.IE.get() > 0)
+		{
+			if (cpu.halted)
+			{
+				cpu.halted = false;
+				cpu.reg_PC += 1;
+			}
+		}
 		// Loop through each bit and call interrupt for lowest . highest priority bits set
 		for (int i = 0; i < 5; i++)
 		{

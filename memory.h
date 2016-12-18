@@ -22,7 +22,7 @@ class Memory
 			P1,
 			DIV, TIMA, TMA, TAC,
 			LCDC, STAT, SCY, SCX, LYC, LY, DMA,
-			BGP, ZBP0, ZBP1, WY, WX,
+			BGP, OBP0, OBP1, WY, WX,
 			IF, IE;
 
 		Byte joypad_buttons;

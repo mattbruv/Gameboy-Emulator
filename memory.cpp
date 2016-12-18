@@ -22,8 +22,8 @@ Memory::Memory()
 	LYC  = MemoryRegister(&ZRAM[0x45]);
 	DMA  = MemoryRegister(&ZRAM[0x46]);
 	BGP  = MemoryRegister(&ZRAM[0x47]);
-	ZBP0 = MemoryRegister(&ZRAM[0x48]);
-	ZBP1 = MemoryRegister(&ZRAM[0x49]);
+	OBP0 = MemoryRegister(&ZRAM[0x48]);
+	OBP1 = MemoryRegister(&ZRAM[0x49]);
 	WY   = MemoryRegister(&ZRAM[0x4A]);
 	WX   = MemoryRegister(&ZRAM[0x4B]);
 	IF   = MemoryRegister(&ZRAM[0x0F]);
@@ -51,8 +51,8 @@ void Memory::reset()
 	SCX.set(0x00);
 	LYC.set(0x00);
 	BGP.set(0xFC);
-	ZBP0.set(0xFF);
-	ZBP1.set(0xFF);
+	OBP0.set(0xFF);
+	OBP1.set(0xFF);
 	WY.set(0x00);
 	WX.set(0x00);
 	IF.set(0x00);
