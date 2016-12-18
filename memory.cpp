@@ -38,7 +38,7 @@ void Memory::reset()
 	fill(ERAM.begin(), ERAM.end(), 0);
 	fill(ZRAM.begin(), ZRAM.end(), 0);
 	fill(VRAM.begin(), VRAM.end(), 0);
-	fill(OAM.begin(),  OAM.end(), 0);
+	fill(OAM.begin(), OAM.end(), 0);
 
 	// The following memory locations are set to the following values after gameboy BIOS runs
 	P1.set(0x00);

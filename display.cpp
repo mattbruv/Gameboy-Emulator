@@ -12,12 +12,17 @@ void Display::init(Memory* _memory)
 
 	bg_array.create(160, 144, sf::Color(255, 0, 255));
 	sprites_array.create(160, 144, sf::Color(0, 0, 0, 0)); // transparent
+
+	shades_of_gray[0x0] = sf::Color(255, 255, 255); // 0x0 - White
+	shades_of_gray[0x1] = sf::Color(127, 127, 127); // 0x1 - Light Gray
+	shades_of_gray[0x2] = sf::Color(198, 198, 198); // 0x2 - Drak Gray
+	shades_of_gray[0x3] = sf::Color(0, 0, 0);       // 0x3 - Black
 }
 
 void Display::render()
 {
-	//if (!is_lcd_enabled())
-	//	return;
+	if (!is_lcd_enabled())
+		return;
 
 	window.clear(sf::Color::Transparent);
 
@@ -126,11 +131,8 @@ void Display::render_sprites()
 	for (int sprite_id = 0; sprite_id < 40; sprite_id++)
 	{
 		Address offset = sprite_data_location + (sprite_id * 4);
-		Byte y_pos = memory->read(offset) - 16;
-		Byte x_pos = memory->read(offset + 1) - 8;
-
-		if (y_pos >= 160)
-			continue;
+		int y_pos = ((int) memory->read(offset)) - 16;
+		int x_pos = ((int) memory->read(offset + 1)) - 8;
 
 		Byte tile_id = memory->read(offset + 2);
 		Byte flags   = memory->read(offset + 3);
@@ -150,6 +152,11 @@ void Display::render_sprite_tile(Byte palette, int start_x, int start_y, Byte ti
 	bool mirror_y = is_bit_set(flags, BIT_6);
 	bool mirror_x = is_bit_set(flags, BIT_5);
 
+	// If set to zero then sprite always rendered above bg
+	// If set to 1, sprite is hidden behind the background and window
+	// unless the color of the background or window is white, it's then rendered on top
+	bool hide_sprite = is_bit_set(flags, BIT_7);
+
 	for (int y = 0; y < 8; y++)
 	{
 		int offset = (tile_id * 16) + sprite_data_location;
@@ -162,6 +169,14 @@ void Display::render_sprite_tile(Byte palette, int start_x, int start_y, Byte ti
 		{
 			int pixel_x = (mirror_x) ? (start_x + x) : (start_x + 7 - x);
 			int pixel_y = start_y + y;
+
+			// prevent pixels from being drawn off screen
+			sf::Vector2u bounds = sprites_array.getSize();
+
+			if (pixel_x < 0 || pixel_x >= bounds.x)
+				continue;
+			if (pixel_y < 0 || pixel_y >= bounds.y)
+				continue;
 
 			sf::Color color = get_pixel_color(palette, low, high, x, true);
 			sprites_array.setPixel(pixel_x, pixel_y, color);
@@ -178,13 +193,6 @@ sf::Color Display::get_pixel_color(Byte palette, Byte top, Byte bottom, int bit,
 	Byte color_1_shade = (palette >> 2) & 0x03; // extract bits 3 & 2
 	Byte color_0_shade = (palette & 0x03);      // extract bits 1 & 0
 
-	sf::Color shades_of_gray[] = {
-		sf::Color(255, 255, 255), // 0x0 - White
-		sf::Color(127, 127, 127), // 0x1 - Light Gray
-		sf::Color(198, 198, 198), // 0x2 - Dark Gray
-		sf::Color(0, 0, 0)        // 0x3 - Black
-	};
-
 	// Get color code from the two defining bytes
 	Byte first  = (Byte)is_bit_set(top, bit);
 	Byte second = (Byte)is_bit_set(bottom, bit);
@@ -192,7 +200,7 @@ sf::Color Display::get_pixel_color(Byte palette, Byte top, Byte bottom, int bit,
 
 	switch (color_code)
 	{
-		case 0x0: return shades_of_gray[color_0_shade];
+		case 0x0: return (is_sprite) ? sf::Color::Transparent : shades_of_gray[color_0_shade];
 		case 0x1: return shades_of_gray[color_1_shade];
 		case 0x2: return shades_of_gray[color_2_shade];
 		case 0x3: return shades_of_gray[color_3_shade];
@@ -205,7 +213,6 @@ sf::Color Display::get_pixel_color(Byte palette, Byte top, Byte bottom, int bit,
 	case 0b01: return sf::Color(136, 192, 112);
 	case 0b00: return sf::Color(224, 248, 208, ((is_sprite) ? 0 : 255));
 	default:   return sf::Color(0, 0, 255); */
-
 }
 
 void Display::draw_scanline()

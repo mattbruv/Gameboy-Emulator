@@ -35,6 +35,8 @@ class Display
 			COLOR_DARK_GRAY  = 2,
 			COLOR_BLACK      = 3;
 
+		sf::Color shades_of_gray[4];
+
 		void render_background();
 		void render_sprites();
 		void render_sprite_tile(Byte pallete, int start_x, int start_y, Byte tile_id, Byte flags);
