@@ -118,7 +118,7 @@ void Memory::load_rom(std::string location)
 	Byte cart = read(0x0147);
 	cout << "Cartridge Type: " << cart_types[cart] << endl;
 	Byte rsize = read(0x0148);
-	cout << "ROM Size: " << (32 * (pow(2, rsize))) << "kB " << pow(2, rsize + 1) << " banks" << endl;
+	cout << "ROM Size: " << (32 << rsize) << "kB " << pow(2, rsize + 1) << " banks" << endl;
 	int size, banks;
 	switch (read(0x149))
 	{
@@ -149,14 +149,10 @@ Byte Memory::get_joypad_state()
 	switch (request)
 	{
 		case 0x10:
-			//cout << "read buttons" << endl;
-			//cout << "A is " << (is_bit_set(joypad_buttons, BIT_0) ? "SET" : "UNSET") << endl;
 			return joypad_buttons;
 		case 0x20:
-			//cout << "read direction" << endl;
 			return joypad_arrows;
 		default:
-			//cout << "SOMETHING ELSE" << endl;
 			return 0xE;
 	}
 }
@@ -193,7 +189,7 @@ Byte Memory::read(Address location)
 	case 0xC000:
 	case 0xD000:
 	case 0xE000:
-		return WRAM[location & 0x1FFF];
+			return WRAM[location & 0x1FFF];
 
 	// Remaining Working RAM Shadow, I/O, Zero page RAM
 	case 0xF000:

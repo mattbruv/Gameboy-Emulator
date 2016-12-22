@@ -29,8 +29,14 @@ void Display::render()
 	// clear existig sprite data
 	sprites_array.create(160, 144, sf::Color(0, 0, 0, 0));
 
-	render_background();
-	render_sprites();
+	bool do_sprites = memory->LCDC.is_bit_set(BIT_1);
+	bool do_background = memory->LCDC.is_bit_set(BIT_0);
+
+	if (do_background)
+		render_background();
+
+	if (do_sprites)
+		render_sprites();
 
 	sf::Texture bg_texture;
 	sf::Texture sprites_texture;
