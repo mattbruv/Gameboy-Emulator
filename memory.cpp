@@ -189,7 +189,7 @@ Byte Memory::read(Address location)
 	case 0xC000:
 	case 0xD000:
 	case 0xE000:
-			return WRAM[location & 0x1FFF];
+		return WRAM[location & 0x1FFF];
 
 	// Remaining Working RAM Shadow, I/O, Zero page RAM
 	case 0xF000:
