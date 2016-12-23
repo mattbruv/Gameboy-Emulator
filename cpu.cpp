@@ -789,7 +789,7 @@ void CPU::HALT()
 	// until interrupts are called
 
 	halted = true;
-	op(-1, 1); // if halted, repeat the halt instruction until interrupt
+	op(-1, 0); // if halted, repeat the halt instruction until interrupt
 
 	// possibly skip next instruction here
 }

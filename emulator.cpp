@@ -298,17 +298,6 @@ void Emulator::set_lcd_status()
 {
 	Byte status = memory.STAT.get();
 
-	if (display.is_lcd_enabled() == false)
-	{
-		// Set mode to 1 during LCD disabled and reset scanline
-		scanline_counter = 456;
-		memory.LY.clear();
-		status &= 252;
-		status = set_bit(status, 0);
-		memory.STAT.set(status);
-		return;
-	}
-
 	Byte current_line = memory.LY.get();
 	// extract current LCD mode
 	Byte current_mode = status & 0x03;
@@ -379,16 +368,16 @@ void Emulator::update_scanline(int cycles)
 {
 	set_lcd_status();
 
-	if (display.is_lcd_enabled())
-		scanline_counter -= cycles;
-	else
-		return;
+	scanline_counter -= cycles;
+
+	if (memory.LY.get() > 153)
+		memory.LY.clear();
 
 	if (scanline_counter <= 0)
 	{
 		Byte current_scanline = memory.LY.get();
 		// increment scanline and reset counter
-		memory.LY.set(current_scanline + 1);
+		memory.LY.set(++current_scanline);
 		scanline_counter = 456;
 
 		// Entered VBLANK period
@@ -397,8 +386,5 @@ void Emulator::update_scanline(int cycles)
 		// Reset counter if past maximum
 		else if (current_scanline > 153)
 			memory.LY.clear();
-		// Draw the next scanline
-		else if (current_scanline < 144)
-			display.draw_scanline();
 	}
 }

@@ -46,7 +46,7 @@ void Memory::reset()
 	TIMA.set(0x00);
 	TMA.set(0x00);
 	TAC.set(0x00);
-	LCDC.set(0x83);
+	LCDC.set(0x91);
 	SCY.set(0x00);
 	SCX.set(0x00);
 	LYC.set(0x00);
@@ -293,6 +293,9 @@ void Memory::write_zero_page(Address location, Byte data)
 		ZRAM[0x04] = 0;
 		break;
 	// TODO: STAT - writing to match flag resets flag but doesn't change mode
+	case 0xFF41:
+		ZRAM[0x41] = (data & 0xFC) | (STAT.get() & 0x03);
+		break;
 
 	// LY Register - Game cannot write to this register directly 
 	case 0xFF44:
