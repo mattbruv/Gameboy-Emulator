@@ -115,6 +115,8 @@ void Memory::load_rom(std::string location)
 	Byte cart = buffer[0x0147];
 	cout << "Cartridge Type: " << cart_types[cart] << endl;
 
+	delete controller;
+
 	// Assign memory controller based on cartridge specification
 	switch (cart)
 	{
@@ -245,7 +247,7 @@ void Memory::write(Address location, Byte data)
 	case 0x5000:
 	case 0x6000:
 	case 0x7000:
-		// READ ONLY
+		controller->write(location, data);
 		break;
 
 	// Graphics VRAM

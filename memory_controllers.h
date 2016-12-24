@@ -12,8 +12,11 @@ class MemoryController
 		vector<Byte> ERAM;		
 
 		// Bank selectors
-		int ROM_bank = 1;
-		int RAM_bank = 0;
+		Byte ROM_bank_id = 1;
+		Byte RAM_bank_id = 0;
+
+		bool RAM_bank_enabled = false;
+		bool RAM_access_enabled = false;
 
 		// Mode selector
 		Byte mode = 0;

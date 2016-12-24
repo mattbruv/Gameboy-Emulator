@@ -3,9 +3,13 @@
 void MemoryController::init(vector<Byte> cartridge_buffer)
 {
 	CART_ROM = cartridge_buffer;
-	ERAM = vector<Byte>(0x2000); // $A000 - $BFFF, 8kB switchable RAM bank, size liable to change in future
+	ERAM = vector<Byte>(0x8000); // $A000 - $BFFF, 8kB switchable RAM bank, size liable to change in future
 }
 
+/*
+	MC0 represents games that use exactly 32kB of space
+	and don't have memory controllers
+*/
 Byte MemoryController0::read(Address location)
 {
 	if (location >= 0x0000 && location <= 0x7FFF)
@@ -22,8 +26,106 @@ void MemoryController0::write(Address location, Byte data)
 		ERAM[location & 0x1FFF] = data;
 }
 
-Byte MemoryController1::read(Address location) { return 0; }
-void MemoryController1::write(Address location, Byte data) {}
+/*
+	Memory Controller 1
+*/
+Byte MemoryController1::read(Address location)
+{
+	// ROM bank 0 (read only)
+	if (location >= 0x0000 && location <= 0x3FFF)
+	{
+		return CART_ROM[location];
+	}
+	// ROM banks 01-7F (read only)
+	else if (location >= 0x4000 && location <= 0x7FFF)
+	{
+		int offset = location - 0x4000;
+		int lookup = (ROM_bank_id * 0x4000) + offset;
 
+		return CART_ROM[lookup];
+	}
+	// RAM banks 00 - 03, if any (read/write)
+	else if (location >= 0xA000 && location <= 0xBFFF)
+	{
+		if (RAM_access_enabled == false)
+			return 0;
+
+		int offset = location - 0xA000;
+		int lookup = (RAM_bank_id * 0x2000) + offset;
+
+		return ERAM[lookup];
+	}
+}
+
+void MemoryController1::write(Address location, Byte data)
+{
+	// RAM enable (write only)
+	if (location >= 0x0000 && location <= 0x1FFF)
+	{
+		// Any value with 0x0A in lower 4 bits enables, everything else disables
+		RAM_access_enabled = ((data & 0x0A) > 0) ? true : false;
+	}
+	// ROM bank id low bits select (write only)
+	else if (location >= 0x2000 && location <= 0x3FFF)
+	{
+		// bottom 5 bits represent bank number from 0x00 -> 0x1F
+		Byte bank_id = data & 0x1F;
+
+		ROM_bank_id = (ROM_bank_id & 0xE0) | bank_id;
+
+		// Prevent bank zero from being accessed
+		// TODO: may need to adjust this to include other banks
+		if (ROM_bank_id == 0)
+			ROM_bank_id++;
+	}
+	// RAM bank id, or upper bits of ROM bank id
+	else if (location >= 0x4000 && location <= 0x5FFF)
+	{
+		// extract bottom 2 bits
+		Byte bank_id = data & 0x03;
+
+		// data represents RAM bank ID
+		if (RAM_bank_enabled)
+		{
+			RAM_bank_id = bank_id;
+		}
+		// data represents top bits of ROM bank ID
+		else
+		{
+			ROM_bank_id = ROM_bank_id | (bank_id << 5);
+
+			// Adjust bank ID to prevent certain banks from being accessed
+			switch (ROM_bank_id)
+			{
+				case 0x00:
+				case 0x20:
+				case 0x40:
+				case 0x60:
+					ROM_bank_id++;
+					break;
+			}
+		}
+	}
+	// Bank selector
+	else if (location >= 0x6000 && location <= 0x7FFF)
+	{
+		RAM_bank_enabled = is_bit_set(data, BIT_0);
+	}
+	// RAM banks 00 - 03, if any (read/write)
+	else if (location >= 0xA000 && location <= 0xBFFF)
+	{
+		if (RAM_access_enabled)
+		{
+			int offset = location - 0xA000;
+			int lookup = (RAM_bank_id * 0x2000) + offset;
+
+			ERAM[lookup] = data;
+		}
+	}
+}
+
+/*
+Memory Controller 2
+*/
 Byte MemoryController2::read(Address location) { return 0; }
 void MemoryController2::write(Address location, Byte data) {}
