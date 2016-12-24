@@ -14,8 +14,8 @@ void Display::init(Memory* _memory)
 	sprites_array.create(160, 144, sf::Color(0, 0, 0, 0)); // transparent
 
 	shades_of_gray[0x0] = sf::Color(255, 255, 255); // 0x0 - White
-	shades_of_gray[0x1] = sf::Color(127, 127, 127); // 0x1 - Light Gray
-	shades_of_gray[0x2] = sf::Color(198, 198, 198); // 0x2 - Drak Gray
+	shades_of_gray[0x1] = sf::Color(198, 198, 198); // 0x1 - Light Gray
+	shades_of_gray[0x2] = sf::Color(127, 127, 127); // 0x2 - Drak Gray
 	shades_of_gray[0x3] = sf::Color(0, 0, 0);       // 0x3 - Black
 }
 
@@ -27,9 +27,9 @@ void Display::render()
 	window.clear(sf::Color::Transparent);
 
 	// clear existig sprite data
-	sprites_array.create(160, 144, sf::Color(0, 0, 0, 0));
+	sprites_array.create(160, 144, sf::Color::Transparent);
 
-	bool do_sprites = memory->LCDC.is_bit_set(BIT_1);
+	bool do_sprites    = memory->LCDC.is_bit_set(BIT_1);
 	bool do_background = memory->LCDC.is_bit_set(BIT_0);
 
 	if (do_background)
@@ -78,6 +78,10 @@ void Display::render_background()
 			int map_x = (int) scroll_x + x;
 			int map_y = (int) scroll_y + y;
 
+			// Adjust map coordinates if they exceed the 256x256 area to loop around
+			map_x = (map_x > 255) ? map_x - 255 : map_x;
+			map_y = (map_y > 255) ? map_y - 255 : map_y;
+
 			// 2. Get the tile ID where that pixel is located
 			int tile_col = floor(map_x / 8);
 			int tile_row = floor(map_y / 8);
@@ -122,51 +126,11 @@ void Display::render_bg_tile_pixel(Byte palette, int display_x, int display_y, i
 	}
 
 	Byte
-		high = memory->read(offset + (tile_y * 2)),
-		low  = memory->read(offset + (tile_y * 2) + 1);
+		high = memory->read(offset + (tile_y * 2) + 1),
+		low  = memory->read(offset + (tile_y * 2));
 
 	sf::Color color = get_pixel_color(palette, low, high, tile_x, false);
 	bg_array.setPixel(display_x, display_y, color);
-}
-
-void Display::render_bg_tile(Byte palette, int display_number, Byte tile_id)
-{
-	bool bg_char_selection = memory->LCDC.is_bit_set(BIT_4);
-
-	// Figure out where the current background character data is being stored
-	// if selection=0 bg area is 0x8800-0x97FF and tile ID is determined by SIGNED -128 to 127
-	// 0x9000 represents the zero ID address in that range
-	Address bg_data_location = (bg_char_selection) ? 0x8000 : 0x9000;
-	for (int y = 0; y < 8; y++)
-	{
-		Address offset;
-
-		// 0x8000 - 0x8FFF unsigned 
-		if (bg_char_selection)
-		{
-			offset = (tile_id * 16) + bg_data_location;
-		}
-		// 0x8800 - 0x97FF signed
-		else
-		{
-			Byte_Signed direction = (Byte_Signed) tile_id;
-			Byte_2 temp_offset = (bg_data_location) + (direction * 16);
-			offset = (Address) temp_offset;
-		}
-
-		Byte
-			high = memory->read(offset + (y * 2)),
-			low  = memory->read(offset + (y * 2) + 1);
-
-		for (int x = 0; x < 8; x++)
-		{
-			int pixel_x = ((display_number % 20) * 8) + 7 - x;
-			int pixel_y = (floor(display_number / 20) * 8) + y;
-
-			sf::Color color = get_pixel_color(palette, low, high, x, false);
-			bg_array.setPixel(pixel_x, pixel_y, color);
-		}
-	}
 }
 
 void Display::render_sprites()
@@ -174,6 +138,8 @@ void Display::render_sprites()
 	Address sprite_data_location = 0xFE00;
 	Byte palette_0 = memory->OBP0.get();
 	Byte palette_1 = memory->OBP1.get();
+
+	bool use_8x16_sprites = memory->LCDC.is_bit_set(BIT_2);
 
 	// 160 bytes of sprite data / 4 bytes per sprite = 40 potential sprites to render maximum
 	for (int sprite_id = 0; sprite_id < 40; sprite_id++)
@@ -188,7 +154,20 @@ void Display::render_sprites()
 		bool use_palette_1 = is_bit_set(flags, BIT_4);
 		Byte sprite_palette = (use_palette_1) ? palette_1 : palette_0;
 
-		render_sprite_tile(sprite_palette, x_pos, y_pos, tile_id, flags);
+		// If in 8x16 mode, the tile pattern for top is VAL & 0xFE
+		// Lower 8x8 tile is VAL | 0x1
+
+		if (use_8x16_sprites)
+		{
+			tile_id = tile_id & 0xFE;
+			Byte tile_id_bottom = tile_id | 0x01;
+			render_sprite_tile(sprite_palette, x_pos, y_pos, tile_id, flags);
+			render_sprite_tile(sprite_palette, x_pos, y_pos + 8, tile_id_bottom, flags);
+		}
+		else
+		{
+			render_sprite_tile(sprite_palette, x_pos, y_pos, tile_id, flags);
+		}
 	}
 }
 
@@ -210,8 +189,8 @@ void Display::render_sprite_tile(Byte palette, int start_x, int start_y, Byte ti
 		int offset = (tile_id * 16) + sprite_data_location;
 
 		Byte
-			high = memory->read(offset + (y * 2)),
-			low  = memory->read(offset + (y * 2) + 1);
+			high = memory->read(offset + (y * 2) + 1),
+			low  = memory->read(offset + (y * 2));
 
 		for (int x = 0; x < 8; x++)
 		{
@@ -227,6 +206,13 @@ void Display::render_sprite_tile(Byte palette, int start_x, int start_y, Byte ti
 				continue;
 
 			sf::Color color = get_pixel_color(palette, low, high, x, true);
+
+			// If color in bg/window is anything but white, hide the sprite pixel
+			sf::Color bg_color = bg_array.getPixel(pixel_x, pixel_y);
+
+			if (priority && bg_color != sf::Color::White)
+				return;
+
 			sprites_array.setPixel(pixel_x, pixel_y, color);
 		}
 	}
@@ -246,9 +232,11 @@ sf::Color Display::get_pixel_color(Byte palette, Byte top, Byte bottom, int bit,
 	Byte second = (Byte)is_bit_set(bottom, bit);
 	Byte color_code = (second << 1) | first;
 
+	sf::Color result;
+
 	switch (color_code)
 	{
-		case 0x0: return (is_sprite) ? sf::Color::Transparent : shades_of_gray[color_0_shade];
+	case 0x0: return (is_sprite) ? sf::Color::Transparent : shades_of_gray[color_0_shade];
 		case 0x1: return shades_of_gray[color_1_shade];
 		case 0x2: return shades_of_gray[color_2_shade];
 		case 0x3: return shades_of_gray[color_3_shade];
