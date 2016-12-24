@@ -3,7 +3,6 @@
 Memory::Memory()
 {
 	WRAM = vector<Byte>(0x2000); // $C000 - $DFFF, 8kB Working RAM
-	ERAM = vector<Byte>(0x2000); // $A000 - $BFFF, 8kB switchable RAM bank, size liable to change in future
 	ZRAM = vector<Byte>(0x0100); // $FF00 - $FFFF, 256 bytes of RAM
 	VRAM = vector<Byte>(0x2000); // $8000 - $9FFF, 8kB Video RAM
 	OAM  = vector<Byte>(0x0100); // $FE00 - $FEFF, OAM Sprite RAM, IO RAM
@@ -35,7 +34,6 @@ Memory::Memory()
 void Memory::reset()
 {
 	fill(WRAM.begin(), WRAM.end(), 0);
-	fill(ERAM.begin(), ERAM.end(), 0);
 	fill(ZRAM.begin(), ZRAM.end(), 0);
 	fill(VRAM.begin(), VRAM.end(), 0);
 	fill(OAM.begin(), OAM.end(), 0);
@@ -67,14 +65,13 @@ void Memory::load_rom(std::string location)
 {
 	ifstream input(location, ios::binary);
 	vector<Byte> buffer((istreambuf_iterator<char>(input)), (istreambuf_iterator<char>()));
-	CART_ROM = buffer;
 
 	// print cartrige data
 	string title = "";
 
 	for (int i = 0x0134; i <= 0x142; i++)
 	{
-		Byte character = read(i);
+		Byte character = buffer[i];
 		if (character == 0)
 			break;
 		else
@@ -82,9 +79,9 @@ void Memory::load_rom(std::string location)
 	}
 
 	cout << "Title: " << title << endl;
-	Byte gb_type = read(0x0143);
+	Byte gb_type = buffer[0x0143];
 	cout << "Gameboy Type: " << ((gb_type == 0x80) ? "GB Color" : "GB") << endl;
-	Byte functions = read(0x0146);
+	Byte functions = buffer[0x0146];
 	cout << "Use " << ((functions == 0x3) ? "Super " : "") << "Gameboy functions" << endl;
 
 	string cart_types[0x100];
@@ -115,12 +112,33 @@ void Memory::load_rom(std::string location)
 	cart_types[0xFE] = "Hudson HuC-3";
 	cart_types[0xFF] = "Hudson HuC-1";
 
-	Byte cart = read(0x0147);
+	Byte cart = buffer[0x0147];
 	cout << "Cartridge Type: " << cart_types[cart] << endl;
-	Byte rsize = read(0x0148);
+
+	// Assign memory controller based on cartridge specification
+	switch (cart)
+	{
+		case 0x01:
+		case 0x02:
+		case 0x03:
+			controller = new MemoryController1();
+			break;
+		case 0x05:
+		case 0x06:
+			controller = new MemoryController2();
+			break;
+		default:
+			controller = new MemoryController0();
+			break;
+	}
+
+	// Initialize controller with cartridge data
+	controller->init(buffer);
+
+	Byte rsize = buffer[0x0148];
 	cout << "ROM Size: " << (32 << rsize) << "kB " << pow(2, rsize + 1) << " banks" << endl;
 	int size, banks;
-	switch (read(0x149))
+	switch (buffer[0x149])
 	{
 		case 1: size = 2; banks = 1;
 		case 2: size = 8; banks = 1;
@@ -129,7 +147,7 @@ void Memory::load_rom(std::string location)
 		default: size = 0; banks = 0;
 	}
 	cout << "RAM Size: " << size << "kB " << banks << " banks" << endl;
-	cout << "Destination Code: " << (read(0x014A) == 1 ? "Non-" : "") << "Japanese" << endl;
+	cout << "Destination Code: " << (buffer[0x014A] == 1 ? "Non-" : "") << "Japanese" << endl;
 }
 
 void Memory::do_dma_transfer()
@@ -161,19 +179,16 @@ Byte Memory::read(Address location)
 {
 	switch (location & 0xF000)
 	{
-	// ROM0
+	// ROM
 	case 0x0000:
 	case 0x1000:
 	case 0x2000:
 	case 0x3000:
-		return CART_ROM[location];
-
-	// ROM1 (no bank switching)
 	case 0x4000:
 	case 0x5000:
 	case 0x6000:
 	case 0x7000:
-		return CART_ROM[location];
+		return controller->read(location);
 
 	// Graphics VRAM
 	case 0x8000:
@@ -183,7 +198,7 @@ Byte Memory::read(Address location)
 	// External RAM
 	case 0xA000:
 	case 0xB000:
-		return ERAM[location & 0x1FFF];
+		return controller->read(location);
 
 	// Working RAM (8kB) and RAM Shadow
 	case 0xC000:
@@ -221,20 +236,16 @@ void Memory::write(Address location, Byte data)
 {
 	switch (location & 0xF000)
 	{
-	// ROM0
+	// ROM
 	case 0x0000:
 	case 0x1000:
 	case 0x2000:
 	case 0x3000:
-		// CART_ROM[location] = data; - READ ONLY
-		break;
-
-	// ROM1 (no bank switching)
 	case 0x4000:
 	case 0x5000:
 	case 0x6000:
 	case 0x7000:
-		// CART_ROM[location] = data; - READ ONLY
+		// READ ONLY
 		break;
 
 	// Graphics VRAM
@@ -246,7 +257,7 @@ void Memory::write(Address location, Byte data)
 	// External RAM
 	case 0xA000:
 	case 0xB000:
-		ERAM[location & 0x1FFF] = data;
+		controller->write(location, data);
 		break;
 
 	// Working RAM (8kB) and RAM Shadow

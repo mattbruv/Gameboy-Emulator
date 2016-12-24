@@ -1,0 +1,51 @@
+#pragma once
+
+#include "types.h"
+
+// Abstract class that each memory controller must represent
+class MemoryController
+{
+	protected:
+		// $0000 - $7FFF, 32kB Cartridge (potentially dynamic)
+		vector<Byte> CART_ROM;
+		// $A000 - $BFFF, 8kB Cartridge external switchable RAM bank
+		vector<Byte> ERAM;		
+
+		// Bank selectors
+		int ROM_bank = 1;
+		int RAM_bank = 0;
+
+		// Mode selector
+		Byte mode = 0;
+		const Byte MODE_ROM = 0;
+		const Byte MODE_RAM = 1;
+
+	public:
+		void init(vector<Byte> cartridge_buffer);
+		virtual Byte read(Address location) = 0;
+		virtual void write(Address location, Byte data) = 0;
+};
+
+// This class represents games that only use the exact 32kB of cartridge space
+class MemoryController0 : public MemoryController {
+	Byte read(Address location);
+	void write(Address location, Byte data);
+};
+
+// MBC1 (max 2MByte ROM and/or 32KByte RAM)
+class MemoryController1 : public MemoryController {
+	Byte read(Address location);
+	void write(Address location, Byte data);
+};
+
+// MBC2 (max 256KByte ROM and 512x4 bits RAM)
+class MemoryController2 : public MemoryController {
+	Byte read(Address location);
+	void write(Address location, Byte data);
+};
+
+// MBC3(max 2MByte ROM and / or 32KByte RAM and Timer)
+class MemoryController3 : public MemoryController {
+	Byte read(Address location);
+	void write(Address location, Byte data);
+};

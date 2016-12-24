@@ -10,8 +10,9 @@ int main(int argc, char *args[])
 	//string name = "instr_timing";
 
 	//emulator.memory.load_rom("tests/" + name + ".gb");
-	//emulator.memory.load_rom("roms/Dr. Mario.gb");
-	emulator.memory.load_rom("roms/tetris.gb");
+	emulator.memory.load_rom("roms/Dr. Mario.gb");
+	//emulator.memory.load_rom("roms/Super Mario Land.gb");
+	//emulator.memory.load_rom("roms/tetris.gb");
 	//emulator.memory.load_rom("roms/minesweeper.gb");
 	//emulator.memory.load_rom("roms/cASTELIAN.gb");
 	//emulator.memory.load_rom("roms/Serpent.gb");
