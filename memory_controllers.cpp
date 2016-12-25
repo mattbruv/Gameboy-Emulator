@@ -6,6 +6,22 @@ void MemoryController::init(vector<Byte> cartridge_buffer)
 	ERAM = vector<Byte>(0x8000); // $A000 - $BFFF, 8kB switchable RAM bank, size liable to change in future
 }
 
+void MemoryController::save_state(int id)
+{
+	cout << "saved" << endl;
+	ofstream output_file("saves/save.sav");
+	ostream_iterator<Byte> output_iterator(output_file, "\n");
+	copy(ERAM.begin(), ERAM.end(), output_iterator);
+}
+
+void MemoryController::load_state(int id)
+{
+	cout << "loaded" << endl;
+	ifstream input("saves/save.sav", ios::binary);
+	vector<Byte> buffer((istreambuf_iterator<char>(input)), (istreambuf_iterator<char>()));
+	ERAM = buffer;
+}
+
 /*
 	MC0 represents games that use exactly 32kB of space
 	and don't have memory controllers
@@ -138,7 +154,103 @@ void MemoryController1::write(Address location, Byte data)
 }
 
 /*
-Memory Controller 2
+	Memory Controller 2
 */
 Byte MemoryController2::read(Address location) { return 0; }
 void MemoryController2::write(Address location, Byte data) {}
+
+/*
+	Memory Controller 3
+*/
+Byte MemoryController3::read(Address location)
+{
+	// ROM bank 0 (read only)
+	if (location >= 0x0000 && location <= 0x3FFF)
+	{
+		return CART_ROM[location];
+	}
+	// ROM banks 01-7F (read only)
+	else if (location >= 0x4000 && location <= 0x7FFF)
+	{
+		int offset = location - 0x4000;
+		int lookup = (ROM_bank_id * 0x4000) + offset;
+
+		return CART_ROM[lookup];
+	}
+	// RAM banks 00 - 03, if any (read/write)
+	else if (location >= 0xA000 && location <= 0xBFFF)
+	{
+		if (RTC_enabled)
+			return 0x00;
+
+		if (RAM_access_enabled == false)
+			return 0xFF;
+
+		int offset = location - 0xA000;
+		int lookup = (RAM_bank_id * 0x2000) + offset;
+
+		return ERAM[lookup];
+	}
+}
+
+void MemoryController3::write(Address location, Byte data)
+{
+	if (location >= 0x0000 && location <= 0x1FFF)
+	{
+		// Any value with 0x0A in lower 4 bits enables, everything else disables
+		if ((data & 0x0A) > 0)
+		{
+			RAM_access_enabled = true;
+			RTC_enabled = true;
+		}
+		else
+		{
+			RAM_access_enabled = false;
+			RTC_enabled = false;
+		}
+	}
+	else if (location >= 0x2000 && location <= 0x3FFF)
+	{
+		// bits 0-6 bits represent bank number from 0x00 -> 0x1F
+		ROM_bank_id = data & 0x7F;
+
+		if (ROM_bank_id == 0)
+			ROM_bank_id++;
+	}
+	else if (location >= 0x4000 && location <= 0x5FFF)
+	{
+		// RAM bank
+		if (data <= 0x3)
+		{
+			RTC_enabled = false;
+			RAM_bank_id = data;
+		}
+		// RTC mapped
+		else if (data >= 0x08 && data <= 0x0C)
+		{
+			RTC_enabled = true;
+		}
+	}
+	else if (location >= 0x6000 && location <= 0x7FFF)
+	{
+		// TODO: Latch clock data
+	}
+	else if (location >= 0xA000 && location <= 0xBFFF)
+	{
+		// writing to RAM
+		if (!RTC_enabled)
+		{
+			if (!RAM_access_enabled)
+				return;
+
+			int offset = location - 0xA000;
+			int lookup = (RAM_bank_id * 0x2000) + offset;
+
+			ERAM[lookup] = data;
+		}
+		else
+		{
+			// TODO: RTC writing
+		}
+	}
+}

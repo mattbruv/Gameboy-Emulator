@@ -75,7 +75,33 @@ void Emulator::key_pressed(Key key)
 {
 	if (key == Key::P)
 	{
-		display.emulate_pallete = !display.emulate_pallete;
+		display.debug_enabled = !display.debug_enabled;
+		cout << "debug enabled: " << display.debug_enabled << endl;
+	}
+
+	// super ghetto, will make much nicer later
+	if (key == Key::F1)
+	{
+		if (sf::Keyboard::isKeyPressed(Key::LShift))
+		{
+			memory.save_state(1);
+		}
+		else
+			memory.load_state(1);
+	}
+
+	if (display.debug_enabled)
+	{
+		if (key == Key::LBracket)
+		{
+			display.force_bg_map = !display.force_bg_map;
+			cout << "force_bg_map: " << display.force_bg_map << endl;
+		}
+		if (key == Key::RBracket)
+		{
+			display.force_bg_loc = !display.force_bg_loc;
+			cout << "force_bg_loc: " << display.force_bg_loc << endl;
+		}
 	}
 	
 	if (key == Key::Space)

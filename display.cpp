@@ -57,11 +57,16 @@ void Display::render_background()
 {
 	bool bg_code_area = memory->LCDC.is_bit_set(BIT_3);
 
+	if (debug_enabled)
+	{
+		bg_code_area = force_bg_map;
+	}
+
 	Address tile_map_location = (bg_code_area) ? 0x9C00 : 0x9800;
 	Byte scroll_x = memory->SCX.get();
 	Byte scroll_y = memory->SCY.get();
 
-	cout << hex << (int)scroll_x << " y: " << (int)scroll_y << endl;
+	//cout << hex << (int)scroll_x << " y: " << (int)scroll_y << endl;
 
 	Byte palette  = memory->BGP.get();
 
@@ -108,6 +113,12 @@ void Display::render_background()
 void Display::render_bg_tile_pixel(Byte palette, int display_x, int display_y, int tile_x, int tile_y, Byte tile_id)
 {
 	bool bg_char_selection = memory->LCDC.is_bit_set(BIT_4);
+
+	if (debug_enabled)
+	{
+		bg_char_selection = force_bg_loc;
+	}
+
 	// Figure out where the current background character data is being stored
 	// if selection=0 bg area is 0x8800-0x97FF and tile ID is determined by SIGNED -128 to 127
 	// 0x9000 represents the zero ID address in that range

@@ -20,6 +20,11 @@ class Display
 
 		bool emulate_pallete = true;
 
+		// debug variables
+		bool debug_enabled = false;
+		bool force_bg_map = false;
+		bool force_bg_loc = false;
+
 		void init(Memory* _memory);
 
 		void draw_scanline();
@@ -39,7 +44,6 @@ class Display
 
 		void render_background();
 		void render_bg_tile_pixel(Byte palette, int display_x, int display_y, int tile_x, int tile_y, Byte tile_id);
-		void render_bg_tile(Byte pallete, int display_number, Byte tile_id);
 		void render_sprites();
 		void render_sprite_tile(Byte pallete, int start_x, int start_y, Byte tile_id, Byte flags);
 		sf::Color get_pixel_color(Byte palette, Byte top, Byte bottom, int bit, bool is_sprite);

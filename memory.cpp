@@ -127,7 +127,15 @@ void Memory::load_rom(std::string location)
 			break;
 		case 0x05:
 		case 0x06:
+			cout << "CONTROLLER NOT IMPLEMENTED" << endl;
 			controller = new MemoryController2();
+			break;
+		case 0x0F:
+		case 0x10:
+		case 0x11:
+		case 0x12:
+		case 0x13:
+			controller = new MemoryController3();
 			break;
 		default:
 			controller = new MemoryController0();
@@ -152,6 +160,16 @@ void Memory::load_rom(std::string location)
 	cout << "Destination Code: " << (buffer[0x014A] == 1 ? "Non-" : "") << "Japanese" << endl;
 }
 
+void Memory::save_state(int id)
+{
+	controller->save_state(id);
+}
+
+void Memory::load_state(int id)
+{
+	controller->load_state(id);
+}
+
 void Memory::do_dma_transfer()
 {
 	Byte_2 address = DMA.get() << 8; // multiply by 100
@@ -173,7 +191,7 @@ Byte Memory::get_joypad_state()
 		case 0x20:
 			return joypad_arrows;
 		default:
-			return 0xE;
+			return 0xFF;
 	}
 }
 
@@ -230,7 +248,7 @@ Byte Memory::read(Address location)
 					return ZRAM[location & 0xFF];
 		}
 	default:
-		return 0;
+		return 0xFF;
 	}
 }
 

@@ -38,6 +38,9 @@ class Memory
 
 		Byte read(Address location);
 
+		void save_state(int id);
+		void load_state(int id);
+
 		void write(Address location, Byte data);
 		void write_zero_page(Address location, Byte data);
 };

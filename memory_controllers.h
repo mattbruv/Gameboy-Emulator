@@ -25,6 +25,8 @@ class MemoryController
 
 	public:
 		void init(vector<Byte> cartridge_buffer);
+		void save_state(int id);
+		void load_state(int id);
 		virtual Byte read(Address location) = 0;
 		virtual void write(Address location, Byte data) = 0;
 };
@@ -49,6 +51,9 @@ class MemoryController2 : public MemoryController {
 
 // MBC3(max 2MByte ROM and / or 32KByte RAM and Timer)
 class MemoryController3 : public MemoryController {
-	Byte read(Address location);
+	
+	bool RTC_enabled = false;
+
+	Byte read(Address locatison);
 	void write(Address location, Byte data);
 };
