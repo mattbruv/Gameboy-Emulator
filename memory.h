@@ -28,6 +28,7 @@ class Memory
 			BGP, OBP0, OBP1, WY, WX,
 			IF, IE;
 
+		Byte video_mode;
 		Byte joypad_buttons;
 		Byte joypad_arrows;
 

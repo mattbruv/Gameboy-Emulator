@@ -25,15 +25,13 @@ void Emulator::run()
 		{
 			Opcode code = memory.read(cpu.reg_PC);
 
-			if (cpu.reg_PC == 0x282A) {
-				bool breakpoint = true;
-			}
-
 			cpu.parse_opcode(code);
 			current_cycle += cpu.num_cycles;
+
 			update_timers(cpu.num_cycles);
 			update_scanline(cpu.num_cycles);
 			do_interrupts();
+			
 			cpu.num_cycles = 0;
 		}
 
@@ -362,6 +360,7 @@ void Emulator::set_lcd_status()
 		status = clear_bit(status, BIT_2);
 
 	memory.STAT.set(status);
+	memory.video_mode = mode;
 }
 
 void Emulator::update_scanline(int cycles)

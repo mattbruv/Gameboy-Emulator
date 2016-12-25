@@ -39,8 +39,11 @@ Byte MemoryController1::read(Address location)
 	// ROM banks 01-7F (read only)
 	else if (location >= 0x4000 && location <= 0x7FFF)
 	{
+		// only ROM banks 0x00 - 0x1F can be used during mode 1
+		Byte temp_id = ROM_bank_id;
+
 		int offset = location - 0x4000;
-		int lookup = (ROM_bank_id * 0x4000) + offset;
+		int lookup = (temp_id * 0x4000) + offset;
 
 		return CART_ROM[lookup];
 	}
@@ -48,10 +51,13 @@ Byte MemoryController1::read(Address location)
 	else if (location >= 0xA000 && location <= 0xBFFF)
 	{
 		if (RAM_access_enabled == false)
-			return 0;
+			return 0xFF;
+
+		// only RAM bank 0 can be used during ROM mode
+		Byte temp_id = (RAM_bank_enabled) ? RAM_bank_id : 0x00;
 
 		int offset = location - 0xA000;
-		int lookup = (RAM_bank_id * 0x2000) + offset;
+		int lookup = (temp_id * 0x2000) + offset;
 
 		return ERAM[lookup];
 	}
@@ -75,8 +81,15 @@ void MemoryController1::write(Address location, Byte data)
 
 		// Prevent bank zero from being accessed
 		// TODO: may need to adjust this to include other banks
-		if (ROM_bank_id == 0)
-			ROM_bank_id++;
+		switch (ROM_bank_id)
+		{
+			case 0x00:
+			case 0x20:
+			case 0x40:
+			case 0x60:
+				ROM_bank_id++;
+				break;
+		}
 	}
 	// RAM bank id, or upper bits of ROM bank id
 	else if (location >= 0x4000 && location <= 0x5FFF)
