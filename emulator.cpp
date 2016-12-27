@@ -35,7 +35,7 @@ void Emulator::run()
 			cpu.num_cycles = 0;
 		}
 
-		display.render();
+		//display.render();
 		//cout << "frame " << current_cycle << endl;
 		current_cycle = 0;
 
@@ -398,9 +398,14 @@ void Emulator::update_scanline(int cycles)
 	if (memory.LY.get() > 153)
 		memory.LY.clear();
 
+	// Enough time has passed to draw the next scanline
 	if (scanline_counter <= 0)
 	{
 		Byte current_scanline = memory.LY.get();
+
+		// draw current scanline to screen
+		display.render();
+
 		// increment scanline and reset counter
 		memory.LY.set(++current_scanline);
 		scanline_counter = 456;

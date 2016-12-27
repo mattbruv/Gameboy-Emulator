@@ -21,8 +21,8 @@ void Display::init(Memory* _memory)
 
 void Display::render()
 {
-	if (!is_lcd_enabled())
-		return;
+	//if (!is_lcd_enabled())
+		//return;
 
 	window.clear(sf::Color::Transparent);
 
@@ -31,6 +31,9 @@ void Display::render()
 
 	bool do_sprites    = memory->LCDC.is_bit_set(BIT_1);
 	bool do_background = memory->LCDC.is_bit_set(BIT_0);
+	
+	// Get current scanline
+	Byte current_scanline = memory->LY.get();
 
 	if (do_background)
 		render_background();
@@ -51,6 +54,56 @@ void Display::render()
 	window.draw(sprites_sprite);
 
 	window.display();
+}
+
+void Display::render_scanline(Byte current_scanline)
+{
+	bool bg_code_area = memory->LCDC.is_bit_set(BIT_3);
+
+	Address tile_map_location = (bg_code_area) ? 0x9C00 : 0x9800;
+	Byte scroll_x = memory->SCX.get();
+	Byte scroll_y = memory->SCY.get();
+
+	//cout << hex << (int)scroll_x << " y: " << (int)scroll_y << endl;
+
+	Byte palette = memory->BGP.get();
+
+	// For each pixel in the 160x1 scanline:
+	// 1. Calculate where the pixel resides in the overall 256x256 background map
+	// 2. Get the tile ID where that pixel is located
+	// 3. Get the pixel color based on that coordinate relative to the 8x8 tile grid
+	// 4. Plot pixel in 160x144 display view
+
+	int y = current_scanline;
+
+	// Iterate from left to right of display screen (x = 0 -> 160)
+	for (int x = 0; x < 160; x++)
+	{
+		// 1. Get pixel X,Y in overall background map, offset by ScrollX & Y
+		int map_x = (int)scroll_x + x;
+		int map_y = (int)scroll_y + y;
+
+		// Adjust map coordinates if they exceed the 256x256 area to loop around
+		map_x = (map_x >= 256) ? map_x - 256 : map_x;
+		map_y = (map_y >= 256) ? map_y - 256 : map_y;
+
+		// 2. Get the tile ID where that pixel is located
+		int tile_col = floor(map_x / 8);
+		int tile_row = floor(map_y / 8);
+		int tile_map_id = (tile_row * 32) + tile_col;
+		Address loc = tile_map_location + tile_map_id;
+		Byte tile_id = memory->read(loc);
+
+		// 3. Get the pixel color based on that coordinate relative to the 8x8 tile grid
+		// 4. Plot pixel in 160x144 display view
+		int tile_x_pixel = map_x % 8;
+		int tile_y_pixel = map_y % 8;
+
+		// Invert x pixels because they are stored backwards
+		tile_x_pixel = abs(tile_x_pixel - 7);
+
+		render_bg_tile_pixel(palette, x, y, tile_x_pixel, tile_y_pixel, tile_id);
+	}
 }
 
 void Display::render_background()
@@ -263,8 +316,6 @@ sf::Color Display::get_pixel_color(Byte palette, Byte top, Byte bottom, int bit,
 	case 0b00: return sf::Color(224, 248, 208, ((is_sprite) ? 0 : 255));
 	default:   return sf::Color(0, 0, 255); */
 }
-
-void Display::draw_scanline() {}
 
 bool Display::is_lcd_enabled()
 {

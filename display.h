@@ -27,7 +27,7 @@ class Display
 
 		void init(Memory* _memory);
 
-		void draw_scanline();
+		void render_scanline(Byte current_scanline);
 		bool is_lcd_enabled();
 		void render();
 
@@ -41,6 +41,8 @@ class Display
 			COLOR_BLACK      = 3;
 
 		sf::Color shades_of_gray[4];
+
+		// convert from whole frame to scanline rendering
 
 		void render_background();
 		void render_bg_tile_pixel(Byte palette, int display_x, int display_y, int tile_x, int tile_y, Byte tile_id);
