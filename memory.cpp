@@ -271,6 +271,7 @@ void Memory::write(Address location, Byte data)
 	// Graphics VRAM
 	case 0x8000:
 	case 0x9000:
+		// Cannot write to VRAM during mode 3 
 		VRAM[location & 0x1FFF] = data;
 		break;
 

@@ -35,7 +35,7 @@ void Emulator::run()
 			cpu.num_cycles = 0;
 		}
 
-		//display.render();
+		display.render();
 		//cout << "frame " << current_cycle << endl;
 		current_cycle = 0;
 
@@ -45,7 +45,8 @@ void Emulator::run()
 		if (frame_time < time_between_frames)
 			sf::sleep(sf::milliseconds(sleep_time));
 		time = time.Zero;
-
+		cout << display.scanlines_rendered << endl;
+		display.scanlines_rendered = 0;
 	}
 }
 
@@ -404,7 +405,8 @@ void Emulator::update_scanline(int cycles)
 		Byte current_scanline = memory.LY.get();
 
 		// draw current scanline to screen
-		display.render();
+		if (current_scanline < 144 && display.scanlines_rendered <= 144)
+			display.update_scanline(current_scanline);
 
 		// increment scanline and reset counter
 		memory.LY.set(++current_scanline);

@@ -11,6 +11,7 @@ void Display::init(Memory* _memory)
 	window.setKeyRepeatEnabled(false);
 
 	bg_array.create(160, 144, sf::Color(255, 0, 255));
+	window_array.create(160, 144,  sf::Color(0, 0, 0, 0));
 	sprites_array.create(160, 144, sf::Color(0, 0, 0, 0)); // transparent
 
 	shades_of_gray[0x0] = sf::Color(255, 255, 255); // 0x0 - White
@@ -21,44 +22,63 @@ void Display::init(Memory* _memory)
 
 void Display::render()
 {
-	//if (!is_lcd_enabled())
-		//return;
+	if (!is_lcd_enabled())
+		return;
 
 	window.clear(sf::Color::Transparent);
 
-	// clear existig sprite data
+	// clear existig sprite and window data
 	sprites_array.create(160, 144, sf::Color::Transparent);
 
-	bool do_sprites    = memory->LCDC.is_bit_set(BIT_1);
-	bool do_background = memory->LCDC.is_bit_set(BIT_0);
-	
-	// Get current scanline
-	Byte current_scanline = memory->LY.get();
-
-	if (do_background)
-		render_background();
+	bool do_sprites = memory->LCDC.is_bit_set(BIT_1);
 
 	if (do_sprites)
 		render_sprites();
 
 	sf::Texture bg_texture;
+	sf::Texture window_texture;
 	sf::Texture sprites_texture;
 
+	window_texture.loadFromImage(window_array);
 	bg_texture.loadFromImage(bg_array);
 	sprites_texture.loadFromImage(sprites_array);
 
+	window_sprite.setTexture(window_texture);
 	bg_sprite.setTexture(bg_texture);
 	sprites_sprite.setTexture(sprites_texture);
 	
 	window.draw(bg_sprite);
+	window.draw(window_sprite);
 	window.draw(sprites_sprite);
 
 	window.display();
 }
 
-void Display::render_scanline(Byte current_scanline)
+void Display::update_scanline(Byte current_scanline)
+{
+	scanlines_rendered++;
+
+	bool do_background = memory->LCDC.is_bit_set(BIT_0);
+	bool do_window     = memory->LCDC.is_bit_set(BIT_5);
+
+	//if (current_scanline == 0)
+		//window_array.create(160, 144, sf::Color::Transparent);
+
+	if (do_background)
+		update_bg_scanline(current_scanline);
+
+	if (do_window)
+		update_window_scanline(current_scanline);
+}
+
+void Display::update_bg_scanline(Byte current_scanline)
 {
 	bool bg_code_area = memory->LCDC.is_bit_set(BIT_3);
+
+	if (debug_enabled)
+	{
+		bg_code_area = force_bg_map;
+	}
 
 	Address tile_map_location = (bg_code_area) ? 0x9C00 : 0x9800;
 	Byte scroll_x = memory->SCX.get();
@@ -102,68 +122,67 @@ void Display::render_scanline(Byte current_scanline)
 		// Invert x pixels because they are stored backwards
 		tile_x_pixel = abs(tile_x_pixel - 7);
 
-		render_bg_tile_pixel(palette, x, y, tile_x_pixel, tile_y_pixel, tile_id);
+		update_bg_tile_pixel(palette, x, y, tile_x_pixel, tile_y_pixel, tile_id);
 	}
 }
 
-void Display::render_background()
+void Display::update_window_scanline(Byte current_scanline)
 {
-	bool bg_code_area = memory->LCDC.is_bit_set(BIT_3);
+	// Get current window tile map
+	bool window_code_area = memory->LCDC.is_bit_set(BIT_6);
 
-	if (debug_enabled)
-	{
-		bg_code_area = force_bg_map;
-	}
+	Address tile_map_location = (window_code_area) ? 0x9C00 : 0x9800;
 
-	Address tile_map_location = (bg_code_area) ? 0x9C00 : 0x9800;
-	Byte scroll_x = memory->SCX.get();
-	Byte scroll_y = memory->SCY.get();
+	Byte window_x = memory->WX.get();
+	Byte window_y = memory->WY.get();
 
-	//cout << hex << (int)scroll_x << " y: " << (int)scroll_y << endl;
+	//if (!(window_y >= 0 && window_y <= 143))
+	//	return;
 
-	Byte palette  = memory->BGP.get();
+	Byte palette = memory->BGP.get();
 
-	// For each pixel in the 160x144 display window:
+	// For each pixel in the 160x1 scanline:
 	// 1. Calculate where the pixel resides in the overall 256x256 background map
 	// 2. Get the tile ID where that pixel is located
 	// 3. Get the pixel color based on that coordinate relative to the 8x8 tile grid
 	// 4. Plot pixel in 160x144 display view
 
-	// Iterate from top to bottom of display screen (y = 0 -> 144)
-	for (int y = 0; y < 144; y++)
+	int y = current_scanline;
+
+	// Iterate from left to right of display screen (x = 0 -> 160)
+	for (int x = 0; x < 160; x++)
 	{
-		// Iterate from left to right of display screen (x = 0 -> 160)
-		for (int x = 0; x < 160; x++)
-		{
-			// 1. Get pixel X,Y in overall background map, offset by ScrollX & Y
-			int map_x = (int) scroll_x + x;
-			int map_y = (int) scroll_y + y;
+		// WINDOW IS RELATIVE TO THE SCREEN
+		// Shift X & Y pixels based on window register value
+		int display_x = x + window_x - 6;
+		int display_y = y + window_y;
 
-			// Adjust map coordinates if they exceed the 256x256 area to loop around
-			map_x = (map_x >= 256) ? map_x - 256 : map_x;
-			map_y = (map_y >= 256) ? map_y - 256 : map_y;
+		if (display_x > 160 || display_y > 144)
+			continue;
 
-			// 2. Get the tile ID where that pixel is located
-			int tile_col = floor(map_x / 8);
-			int tile_row = floor(map_y / 8);
-			int tile_map_id = (tile_row * 32) + tile_col;
-			Address loc = tile_map_location + tile_map_id;
-			Byte tile_id = memory->read(loc);
+		if (display_x < 0 || display_y < 0)
+			continue;
 
-			// 3. Get the pixel color based on that coordinate relative to the 8x8 tile grid
-			// 4. Plot pixel in 160x144 display view
-			int tile_x_pixel = map_x % 8;
-			int tile_y_pixel = map_y % 8;
+		// 1. Get the tile ID where that pixel is located
+		int tile_col = floor(x / 8);
+		int tile_row = floor(y / 8);
+		int tile_map_id = (tile_row * 32) + tile_col;
+		Address loc = tile_map_location + tile_map_id;
+		Byte tile_id = memory->read(loc);
 
-			// Invert x pixels because they are stored backwards
-			tile_x_pixel = abs(tile_x_pixel - 7);
+		// 2. Get the pixel color based on that coordinate relative to the 8x8 tile grid
+		// 3. Plot pixel in 160x144 display view
+		int tile_x_pixel = x % 8;
+		int tile_y_pixel = y % 8;
 
-			render_bg_tile_pixel(palette, x, y, tile_x_pixel, tile_y_pixel, tile_id);
-		}
+		// Invert x pixels because they are stored backwards
+		tile_x_pixel = abs(tile_x_pixel - 7);
+
+		update_window_tile_pixel(palette, display_x, display_y, tile_x_pixel, tile_y_pixel, tile_id);
 	}
 }
 
-void Display::render_bg_tile_pixel(Byte palette, int display_x, int display_y, int tile_x, int tile_y, Byte tile_id)
+void Display::update_bg_tile_pixel(Byte palette, int display_x, int display_y, int tile_x, int tile_y, Byte tile_id)
 {
 	bool bg_char_selection = memory->LCDC.is_bit_set(BIT_4);
 
@@ -197,6 +216,43 @@ void Display::render_bg_tile_pixel(Byte palette, int display_x, int display_y, i
 
 	sf::Color color = get_pixel_color(palette, low, high, tile_x, false);
 	bg_array.setPixel(display_x, display_y, color);
+}
+
+void Display::update_window_tile_pixel(Byte palette, int display_x, int display_y, int tile_x, int tile_y, Byte tile_id)
+{
+	bool bg_char_selection = memory->LCDC.is_bit_set(BIT_4);
+
+	if (debug_enabled)
+	{
+		bg_char_selection = force_bg_loc;
+	}
+
+	// Figure out where the current background character data is being stored
+	// if selection=0 bg area is 0x8800-0x97FF and tile ID is determined by SIGNED -128 to 127
+	// 0x9000 represents the zero ID address in that range
+	Address bg_data_location = (bg_char_selection) ? 0x8000 : 0x9000;
+	Address offset;
+
+	// 0x8000 - 0x8FFF unsigned 
+	if (bg_char_selection)
+	{
+		offset = (tile_id * 16) + bg_data_location;
+	}
+	// 0x8800 - 0x97FF signed
+	else
+	{
+		Byte_Signed direction = (Byte_Signed) tile_id;
+		Byte_2 temp_offset = (bg_data_location) + (direction * 16);
+		offset = (Address) temp_offset;
+	}
+
+	Byte
+		high = memory->read(offset + (tile_y * 2) + 1),
+		low  = memory->read(offset + (tile_y * 2));
+
+	sf::Color color = get_pixel_color(palette, low, high, tile_x, false);
+
+	window_array.setPixel(display_x, display_y, color);
 }
 
 void Display::render_sprites()

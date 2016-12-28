@@ -11,9 +11,11 @@ class Display
 		
 		sf::Image bg_array;
 		sf::Image sprites_array;
+		sf::Image window_array;
 
 		sf::Sprite bg_sprite;
 		sf::Sprite sprites_sprite; // lol
+		sf::Sprite window_sprite;
 
 		int width = 160,
 			height = 144;
@@ -27,9 +29,15 @@ class Display
 
 		void init(Memory* _memory);
 
-		void render_scanline(Byte current_scanline);
-		bool is_lcd_enabled();
+		int scanlines_rendered = 0;
+
+		// Scanline updating
+		void update_scanline(Byte current_scanline);
+
+		// Output all scanlines as a single frame
 		void render();
+
+		bool is_lcd_enabled();
 
 	private:
 		Memory* memory;
@@ -42,11 +50,15 @@ class Display
 
 		sf::Color shades_of_gray[4];
 
-		// convert from whole frame to scanline rendering
+		void update_bg_scanline(Byte current_scanline);
+		void update_window_scanline(Byte current_scanline);
+		// TODO: void update_sprite_scanline(Byte current_scanline);
 
-		void render_background();
-		void render_bg_tile_pixel(Byte palette, int display_x, int display_y, int tile_x, int tile_y, Byte tile_id);
+		void update_bg_tile_pixel(Byte palette, int display_x, int display_y, int tile_x, int tile_y, Byte tile_id);
+		void update_window_tile_pixel(Byte palette, int display_x, int display_y, int tile_x, int tile_y, Byte tile_id);
+		
+		sf::Color get_pixel_color(Byte palette, Byte top, Byte bottom, int bit, bool is_sprite);
+
 		void render_sprites();
 		void render_sprite_tile(Byte pallete, int start_x, int start_y, Byte tile_id, Byte flags);
-		sf::Color get_pixel_color(Byte palette, Byte top, Byte bottom, int bit, bool is_sprite);
 };
