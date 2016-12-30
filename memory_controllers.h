@@ -25,8 +25,6 @@ class MemoryController
 
 	public:
 		void init(vector<Byte> cartridge_buffer);
-		void save_state(int id);
-		void load_state(int id);
 		virtual Byte read(Address location) = 0;
 		virtual void write(Address location, Byte data) = 0;
 };

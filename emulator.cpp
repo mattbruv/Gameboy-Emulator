@@ -35,7 +35,7 @@ void Emulator::run()
 			cpu.num_cycles = 0;
 		}
 
-		display.render();
+		//display.render();
 		//cout << "frame " << current_cycle << endl;
 		current_cycle = 0;
 
@@ -89,27 +89,6 @@ void Emulator::key_pressed(Key key)
 		}
 		else
 			memory.load_state(1);
-	}
-
-	if (key == Key::Y)
-	{
-		int test = memory.WY.get();
-
-		cout << "WINY" << test << endl;
-	}
-
-	if (display.debug_enabled)
-	{
-		if (key == Key::LBracket)
-		{
-			display.force_bg_map = !display.force_bg_map;
-			cout << "force_bg_map: " << display.force_bg_map << endl;
-		}
-		if (key == Key::RBracket)
-		{
-			display.force_bg_loc = !display.force_bg_loc;
-			cout << "force_bg_loc: " << display.force_bg_loc << endl;
-		}
 	}
 	
 	if (key == Key::Space)
@@ -421,7 +400,11 @@ void Emulator::update_scanline(int cycles)
 
 		// Entered VBLANK period
 		if (current_scanline == 144)
+		{
 			request_interrupt(INTERRUPT_VBLANK);
+			if (display.scanlines_rendered <= 144)
+				display.render();
+		}
 		// Reset counter if past maximum
 		else if (current_scanline > 153)
 			memory.LY.clear();

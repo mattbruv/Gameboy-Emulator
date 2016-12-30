@@ -4,7 +4,7 @@ void Display::init(Memory* _memory)
 {
 	memory = _memory;
 
-	int scale = 5;
+	int scale = 1;
 	
 	window.create(sf::VideoMode(width, height), "Gameboy Emulator");
 	window.setSize(sf::Vector2u(width * scale, height * scale));
@@ -17,7 +17,17 @@ void Display::init(Memory* _memory)
 	shades_of_gray[0x0] = sf::Color(255, 255, 255); // 0x0 - White
 	shades_of_gray[0x1] = sf::Color(198, 198, 198); // 0x1 - Light Gray
 	shades_of_gray[0x2] = sf::Color(127, 127, 127); // 0x2 - Drak Gray
-	shades_of_gray[0x3] = sf::Color(0, 0, 0);       // 0x3 - Black
+	shades_of_gray[0x3] = sf::Color(0, 0, 0);       // 0x3 - Black/**/
+	/*
+	shades_of_gray[0x0] = sf::Color(224, 248, 208); // 0x0 - White
+	shades_of_gray[0x1] = sf::Color(136, 192, 112); // 0x1 - Light Gray
+	shades_of_gray[0x2] = sf::Color(48, 104, 80); // 0x2 - Drak Gray
+	shades_of_gray[0x3] = sf::Color(8, 24, 32);       // 0x3 - Black 
+	/*
+	shades_of_gray[0x0] = sf::Color(155, 187, 14); // 0x0 - White
+	shades_of_gray[0x1] = sf::Color(115, 160, 103); // 0x1 - Light Gray
+	shades_of_gray[0x2] = sf::Color(53, 98, 55); // 0x2 - Drak Gray
+	shades_of_gray[0x3] = sf::Color(15, 56, 14);       // 0x3 - Black*/
 }
 
 void Display::render()
@@ -65,9 +75,6 @@ void Display::update_scanline(Byte current_scanline)
 
 	bool do_background = memory->LCDC.is_bit_set(BIT_0);
 	bool do_window     = memory->LCDC.is_bit_set(BIT_5);
-
-	//if (current_scanline == 0)
-		//clear_window();
 
 	if (do_background)
 		update_bg_scanline(current_scanline);
@@ -157,11 +164,11 @@ void Display::update_window_scanline(Byte current_scanline)
 		// WINDOW IS RELATIVE TO THE SCREEN
 		// Shift X & Y pixels based on window register value
 		int display_x = x + window_x - 7;
-		int display_y = y + window_y;
+		int display_y = y;
 
 		// 1. Get the tile ID where that pixel is located
 		int tile_col = floor(x / 8);
-		int tile_row = floor(y / 8);
+		int tile_row = floor((y - window_y) / 8);
 		int tile_map_id = (tile_row * 32) + tile_col;
 		Address loc = tile_map_location + tile_map_id;
 		Byte tile_id = memory->read(loc);
@@ -174,12 +181,16 @@ void Display::update_window_scanline(Byte current_scanline)
 		// Invert x pixels because they are stored backwards
 		tile_x_pixel = abs(tile_x_pixel - 7);
 
+		if (current_scanline == 128)
+			bool breakpoint = true;
+
 		if (current_scanline < window_y)
 		{
 			window_array.setPixel(x, y, sf::Color::Transparent);
 		}
 		else
 		{
+			//window_array.setPixel(x, y, sf::Color::Blue);
 			update_window_tile_pixel(palette, display_x, display_y, tile_x_pixel, tile_y_pixel, tile_id);
 		}
 	}
@@ -372,13 +383,6 @@ sf::Color Display::get_pixel_color(Byte palette, Byte top, Byte bottom, int bit,
 		case 0x3: return shades_of_gray[color_3_shade];
 		default:  return sf::Color(255, 0, 255); // error color
 	}
-
-	/*
-	case 0b11: return sf::Color(8, 24, 32);
-	case 0b10: return sf::Color(48, 104, 80);
-	case 0b01: return sf::Color(136, 192, 112);
-	case 0b00: return sf::Color(224, 248, 208, ((is_sprite) ? 0 : 255));
-	default:   return sf::Color(0, 0, 255); */
 }
 
 bool Display::is_lcd_enabled()

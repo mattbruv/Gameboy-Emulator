@@ -162,12 +162,10 @@ void Memory::load_rom(std::string location)
 
 void Memory::save_state(int id)
 {
-	controller->save_state(id);
 }
 
 void Memory::load_state(int id)
 {
-	controller->load_state(id);
 }
 
 void Memory::do_dma_transfer()

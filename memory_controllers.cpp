@@ -6,22 +6,6 @@ void MemoryController::init(vector<Byte> cartridge_buffer)
 	ERAM = vector<Byte>(0x8000); // $A000 - $BFFF, 8kB switchable RAM bank, size liable to change in future
 }
 
-void MemoryController::save_state(int id)
-{
-	cout << "saved" << endl;
-	ofstream output_file("saves/save.sav");
-	ostream_iterator<Byte> output_iterator(output_file, "\n");
-	copy(ERAM.begin(), ERAM.end(), output_iterator);
-}
-
-void MemoryController::load_state(int id)
-{
-	cout << "loaded" << endl;
-	ifstream input("saves/save.sav", ios::binary);
-	vector<Byte> buffer((istreambuf_iterator<char>(input)), (istreambuf_iterator<char>()));
-	ERAM = buffer;
-}
-
 /*
 	MC0 represents games that use exactly 32kB of space
 	and don't have memory controllers
