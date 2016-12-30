@@ -4,7 +4,7 @@ void Display::init(Memory* _memory)
 {
 	memory = _memory;
 
-	int scale = 1;
+	int scale = 5;
 	
 	window.create(sf::VideoMode(width, height), "Gameboy Emulator");
 	window.setSize(sf::Vector2u(width * scale, height * scale));
@@ -283,7 +283,8 @@ void Display::render_sprites()
 	bool use_8x16_sprites = memory->LCDC.is_bit_set(BIT_2);
 
 	// 160 bytes of sprite data / 4 bytes per sprite = 40 potential sprites to render maximum
-	for (int sprite_id = 0; sprite_id < 40; sprite_id++)
+	// Start at 39 -> to have right priority
+	for (int sprite_id = 39; sprite_id >= 0; sprite_id--)
 	{
 		Address offset = sprite_data_location + (sprite_id * 4);
 		int y_pos = ((int) memory->read(offset)) - 16;
@@ -336,7 +337,7 @@ void Display::render_sprite_tile(Byte palette, int start_x, int start_y, Byte ti
 		for (int x = 0; x < 8; x++)
 		{
 			int pixel_x = (mirror_x) ? (start_x + x) : (start_x + 7 - x);
-			int pixel_y = start_y + y;
+			int pixel_y = (mirror_y) ? (start_y + 7 - y) : (start_y + y);
 
 			// prevent pixels from being drawn off screen
 			sf::Vector2u bounds = sprites_array.getSize();
@@ -350,9 +351,15 @@ void Display::render_sprite_tile(Byte palette, int start_x, int start_y, Byte ti
 
 			// If color in bg/window is anything but white, hide the sprite pixel
 			sf::Color bg_color = bg_array.getPixel(pixel_x, pixel_y);
-
-			if (priority && bg_color != sf::Color::White)
-				return;
+			
+			if (priority)
+			{
+				if (bg_color != shades_of_gray[0x0])
+				{
+					continue;
+					//color = sf::Color::Transparent;
+				}
+			}
 
 			sprites_array.setPixel(pixel_x, pixel_y, color);
 		}
@@ -377,7 +384,7 @@ sf::Color Display::get_pixel_color(Byte palette, Byte top, Byte bottom, int bit,
 
 	switch (color_code)
 	{
-	case 0x0: return (is_sprite) ? sf::Color::Transparent : shades_of_gray[color_0_shade];
+		case 0x0: return (is_sprite) ? sf::Color::Transparent : shades_of_gray[color_0_shade];
 		case 0x1: return shades_of_gray[color_1_shade];
 		case 0x2: return shades_of_gray[color_2_shade];
 		case 0x3: return shades_of_gray[color_3_shade];
