@@ -45,7 +45,7 @@ void Emulator::run()
 		if (frame_time < time_between_frames)
 			sf::sleep(sf::milliseconds(sleep_time));
 		time = time.Zero;
-		cout << display.scanlines_rendered << endl;
+		//cout << display.scanlines_rendered << endl;
 		display.scanlines_rendered = 0;
 	}
 }
@@ -89,6 +89,13 @@ void Emulator::key_pressed(Key key)
 		}
 		else
 			memory.load_state(1);
+	}
+
+	if (key == Key::Y)
+	{
+		int test = memory.WY.get();
+
+		cout << "WINY" << test << endl;
 	}
 
 	if (display.debug_enabled)

@@ -54,6 +54,11 @@ void Display::render()
 	window.display();
 }
 
+void Display::clear_window()
+{
+	window_array.create(160, 144, sf::Color::Transparent);
+}
+
 void Display::update_scanline(Byte current_scanline)
 {
 	scanlines_rendered++;
@@ -62,7 +67,7 @@ void Display::update_scanline(Byte current_scanline)
 	bool do_window     = memory->LCDC.is_bit_set(BIT_5);
 
 	//if (current_scanline == 0)
-		//window_array.create(160, 144, sf::Color::Transparent);
+		//clear_window();
 
 	if (do_background)
 		update_bg_scanline(current_scanline);
@@ -133,35 +138,26 @@ void Display::update_window_scanline(Byte current_scanline)
 
 	Address tile_map_location = (window_code_area) ? 0x9C00 : 0x9800;
 
-	Byte window_x = memory->WX.get();
-	Byte window_y = memory->WY.get();
-
-	//if (!(window_y >= 0 && window_y <= 143))
-	//	return;
+	int window_x = (int) memory->WX.get();
+	int window_y = (int) memory->WY.get();
 
 	Byte palette = memory->BGP.get();
-
+	
 	// For each pixel in the 160x1 scanline:
 	// 1. Calculate where the pixel resides in the overall 256x256 background map
 	// 2. Get the tile ID where that pixel is located
 	// 3. Get the pixel color based on that coordinate relative to the 8x8 tile grid
 	// 4. Plot pixel in 160x144 display view
 
-	int y = current_scanline;
+	int y = (int) current_scanline;
 
 	// Iterate from left to right of display screen (x = 0 -> 160)
 	for (int x = 0; x < 160; x++)
 	{
 		// WINDOW IS RELATIVE TO THE SCREEN
 		// Shift X & Y pixels based on window register value
-		int display_x = x + window_x - 6;
+		int display_x = x + window_x - 7;
 		int display_y = y + window_y;
-
-		if (display_x > 160 || display_y > 144)
-			continue;
-
-		if (display_x < 0 || display_y < 0)
-			continue;
 
 		// 1. Get the tile ID where that pixel is located
 		int tile_col = floor(x / 8);
@@ -178,7 +174,14 @@ void Display::update_window_scanline(Byte current_scanline)
 		// Invert x pixels because they are stored backwards
 		tile_x_pixel = abs(tile_x_pixel - 7);
 
-		update_window_tile_pixel(palette, display_x, display_y, tile_x_pixel, tile_y_pixel, tile_id);
+		if (current_scanline < window_y)
+		{
+			window_array.setPixel(x, y, sf::Color::Transparent);
+		}
+		else
+		{
+			update_window_tile_pixel(palette, display_x, display_y, tile_x_pixel, tile_y_pixel, tile_id);
+		}
 	}
 }
 
@@ -220,6 +223,11 @@ void Display::update_bg_tile_pixel(Byte palette, int display_x, int display_y, i
 
 void Display::update_window_tile_pixel(Byte palette, int display_x, int display_y, int tile_x, int tile_y, Byte tile_id)
 {
+	if (display_x >= 160 || display_x < 0)
+		return;
+	if (display_y >= 144 || display_y < 0)
+		return;
+
 	bool bg_char_selection = memory->LCDC.is_bit_set(BIT_4);
 
 	if (debug_enabled)

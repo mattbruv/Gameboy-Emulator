@@ -197,6 +197,7 @@ Byte Memory::get_joypad_state()
 
 Byte Memory::read(Address location)
 {
+	
 	switch (location & 0xF000)
 	{
 	// ROM

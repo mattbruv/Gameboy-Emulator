@@ -59,6 +59,7 @@ class Display
 		
 		sf::Color get_pixel_color(Byte palette, Byte top, Byte bottom, int bit, bool is_sprite);
 
+		void clear_window();
 		void render_sprites();
 		void render_sprite_tile(Byte pallete, int start_x, int start_y, Byte tile_id, Byte flags);
 };
