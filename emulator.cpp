@@ -420,13 +420,12 @@ void Emulator::save_state(int id)
 
 	ofstream file;
 
-	file.open("./saves/testing.bin", ios::binary);
-	file << hex;
+	file.open("testing.bin", ios::binary);
 
 	if (!file.bad())
 	{
 		cpu.save_state(file);
-		///memory.save_state(file);
+		memory.save_state(file);
 		file.close();
 
 		cout << "wrote save state " << id << endl;
@@ -435,13 +434,13 @@ void Emulator::save_state(int id)
 
 void Emulator::load_state(int id)
 {
-	ifstream file("./saves/testing.bin");
+	ifstream file("testing.bin", ios::binary);
 
 	if (file.is_open())
 	{
 		cpu.load_state(file);
-		//memory.load_state(file);
-
+		memory.load_state(file);
+		file.close();
 		cout << "loaded state " << id << endl;
 	}
 }
