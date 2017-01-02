@@ -434,7 +434,7 @@ void Emulator::save_state(int id)
 
 void Emulator::load_state(int id)
 {
-	ifstream file("testing.bin");
+	ifstream file("testing.bin", ios::binary);
 
 	if (file.is_open())
 	{
