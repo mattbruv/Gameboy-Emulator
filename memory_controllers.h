@@ -27,6 +27,10 @@ class MemoryController
 		void init(vector<Byte> cartridge_buffer);
 		virtual Byte read(Address location) = 0;
 		virtual void write(Address location, Byte data) = 0;
+
+		// Save states
+		vector<Byte> get_ram();
+		void set_ram(vector<Byte> data);
 };
 
 // This class represents games that only use the exact 32kB of cartridge space

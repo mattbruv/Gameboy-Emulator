@@ -85,10 +85,10 @@ void Emulator::key_pressed(Key key)
 	{
 		if (sf::Keyboard::isKeyPressed(Key::LShift))
 		{
-			memory.save_state(1);
+			save_state(1);
 		}
 		else
-			memory.load_state(1);
+			load_state(1);
 	}
 	
 	if (key == Key::Space)
@@ -408,5 +408,40 @@ void Emulator::update_scanline(int cycles)
 		// Reset counter if past maximum
 		else if (current_scanline > 153)
 			memory.LY.clear();
+	}
+}
+
+void Emulator::save_state(int id)
+{
+	// write following data to a file
+	// CPU registers
+	// All memory
+	// controller ERAM
+
+	ofstream file;
+
+	file.open("./saves/testing.bin", ios::binary);
+	file << hex;
+
+	if (!file.bad())
+	{
+		cpu.save_state(file);
+		///memory.save_state(file);
+		file.close();
+
+		cout << "wrote save state " << id << endl;
+	}
+}
+
+void Emulator::load_state(int id)
+{
+	ifstream file("./saves/testing.bin");
+
+	if (file.is_open())
+	{
+		cpu.load_state(file);
+		//memory.load_state(file);
+
+		cout << "loaded state " << id << endl;
 	}
 }

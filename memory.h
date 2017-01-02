@@ -38,8 +38,10 @@ class Memory
 
 		Byte read(Address location);
 
-		void save_state(int id);
-		void load_state(int id);
+		void write_vector(ofstream &file, vector<Byte> &vec);
+		void load_vector(ifstream &file, vector<Byte> &vec);
+		void save_state(ofstream &file);
+		void load_state(ifstream &file);
 
 		void write(Address location, Byte data);
 		void write_zero_page(Address location, Byte data);

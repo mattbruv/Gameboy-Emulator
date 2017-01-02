@@ -1,5 +1,7 @@
 #pragma once
 
+#include <fstream>
+
 #include <SFML\System.hpp>
 #include "cpu.h"
 #include "memory.h"
@@ -28,6 +30,10 @@ class Emulator
 		void key_pressed(Key key);
 		void key_released(Key key);
 		int get_key_id(Key key);
+
+		// -------- SAVESTATES ------- //
+		void save_state(int id);
+		void load_state(int id);
 
 		// --------- DIVIDER --------- //
 		int divider_counter = 0;

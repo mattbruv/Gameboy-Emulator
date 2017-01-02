@@ -6,6 +6,16 @@ void MemoryController::init(vector<Byte> cartridge_buffer)
 	ERAM = vector<Byte>(0x8000); // $A000 - $BFFF, 8kB switchable RAM bank, size liable to change in future
 }
 
+vector<Byte> MemoryController::get_ram()
+{
+	return ERAM;
+}
+
+void MemoryController::set_ram(vector<Byte> data)
+{
+	ERAM = data;
+}
+
 /*
 	MC0 represents games that use exactly 32kB of space
 	and don't have memory controllers

@@ -22,7 +22,9 @@ class CPU
 		int num_cycles = 0;
 		bool interrupt_master_enable = true;
 		bool halted = false;
-		Address last_fn_call;
+
+		void save_state(ofstream &file);
+		void load_state(ifstream &file);
 
 		void init(Memory* _memory);
 		void reset();
@@ -42,7 +44,6 @@ class CPU
 		void op(int pc, int cycle);
 		void parse_bit_op(Opcode code);
 		void set_flag(int flag, bool value);
-		void stop();
 
 		// ---------- CPU INSTRUCTIONS ---------- //
 

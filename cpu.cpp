@@ -40,7 +40,16 @@ void CPU::reset()
 	reg_PC = 0x100;
 }
 
-void CPU::stop() {}
+void CPU::save_state(ofstream &file)
+{
+	// 0 0 16 0 16 255 168 160 53247 876
+	file << reg_A << reg_B << reg_C << reg_D << reg_E << reg_F << reg_H << reg_L << reg_SP << reg_PC;
+}
+
+void CPU::load_state(ifstream &file)
+{
+	file >> reg_A >> reg_B >> reg_C >> reg_D >> reg_E >> reg_F >> reg_H >> reg_L >> reg_SP >> reg_PC;
+}
 
 void CPU::op(int pc, int cycle)
 {

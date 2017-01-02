@@ -160,12 +160,46 @@ void Memory::load_rom(std::string location)
 	cout << "Destination Code: " << (buffer[0x014A] == 1 ? "Non-" : "") << "Japanese" << endl;
 }
 
-void Memory::save_state(int id)
+void Memory::save_state(ofstream &file)
 {
+	write_vector(file, VRAM);
+	write_vector(file, OAM);
+	write_vector(file, WRAM);
+	write_vector(file, ZRAM);
+
+	// save ERAM
+	vector<Byte> eram = controller->get_ram();
+	write_vector(file, eram);
 }
 
-void Memory::load_state(int id)
+void Memory::load_state(ifstream &file)
 {
+	load_vector(file, VRAM);
+	load_vector(file, OAM);
+	load_vector(file, WRAM);
+	load_vector(file, ZRAM);
+
+	// Load ERAM
+	vector<Byte> eram(0x8000);
+
+	load_vector(file, eram);
+	controller->set_ram(eram);
+}
+
+void Memory::write_vector(ofstream &file, vector<Byte> &vec)
+{
+	for (int i = 0; i < vec.size(); i++)
+	{
+		file << vec[i];
+	}
+}
+
+void Memory::load_vector(ifstream &file, vector<Byte> &vec)
+{
+	for (int i = 0; i < vec.size(); i++)
+	{
+		file >> vec[i];
+	}
 }
 
 void Memory::do_dma_transfer()
