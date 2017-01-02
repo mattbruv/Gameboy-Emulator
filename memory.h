@@ -32,6 +32,8 @@ class Memory
 		Byte joypad_buttons;
 		Byte joypad_arrows;
 
+		string rom_name;
+
 		Memory::Memory();
 		void reset();
 		void load_rom(std::string location);

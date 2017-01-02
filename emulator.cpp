@@ -81,14 +81,18 @@ void Emulator::key_pressed(Key key)
 	}
 
 	// super ghetto, will make much nicer later
-	if (key == Key::F1)
+	if (key >= 85 && key <= 96)
 	{
+		int id = key - 84;
 		if (sf::Keyboard::isKeyPressed(Key::LShift))
 		{
-			save_state(1);
+			save_state(id);
 		}
 		else
-			load_state(1);
+		{
+			load_state(id);
+		}
+		return;
 	}
 	
 	if (key == Key::Space)
@@ -413,20 +417,14 @@ void Emulator::update_scanline(int cycles)
 
 void Emulator::save_state(int id)
 {
-	// write following data to a file
-	// CPU registers
-	// All memory
-	// controller ERAM
-
 	ofstream file;
-
-	file.open("./saves/testing.bin", ios::binary);
-	file << hex;
+	string filename = "./saves/" + memory.rom_name + "_" + to_string(id) + ".sav";
+	file.open(filename, ios::binary | ios::trunc);
 
 	if (!file.bad())
 	{
 		cpu.save_state(file);
-		///memory.save_state(file);
+		memory.save_state(file);
 		file.close();
 
 		cout << "wrote save state " << id << endl;
@@ -435,12 +433,14 @@ void Emulator::save_state(int id)
 
 void Emulator::load_state(int id)
 {
-	ifstream file("./saves/testing.bin");
+	string filename = "./saves/" + memory.rom_name + "_" + to_string(id) + ".sav";
+	ifstream file(filename, ios::binary);
 
 	if (file.is_open())
 	{
 		cpu.load_state(file);
-		//memory.load_state(file);
+		memory.load_state(file);
+		file.close();
 
 		cout << "loaded state " << id << endl;
 	}

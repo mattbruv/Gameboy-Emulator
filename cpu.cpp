@@ -42,13 +42,30 @@ void CPU::reset()
 
 void CPU::save_state(ofstream &file)
 {
-	// 0 0 16 0 16 255 168 160 53247 876
-	file << reg_A << reg_B << reg_C << reg_D << reg_E << reg_F << reg_H << reg_L << reg_SP << reg_PC;
+	file.write((char*)&reg_A, sizeof(reg_A));
+	file.write((char*)&reg_B, sizeof(reg_B));
+	file.write((char*)&reg_C, sizeof(reg_C));
+	file.write((char*)&reg_D, sizeof(reg_D));
+	file.write((char*)&reg_E, sizeof(reg_E));
+	file.write((char*)&reg_F, sizeof(reg_F));
+	file.write((char*)&reg_H, sizeof(reg_H));
+	file.write((char*)&reg_L, sizeof(reg_L));
+	file.write((char*)&reg_SP, sizeof(reg_SP));
+	file.write((char*)&reg_PC, sizeof(reg_PC));
 }
 
 void CPU::load_state(ifstream &file)
 {
-	file >> reg_A >> reg_B >> reg_C >> reg_D >> reg_E >> reg_F >> reg_H >> reg_L >> reg_SP >> reg_PC;
+	file.read((char*)&reg_A, sizeof(reg_A));
+	file.read((char*)&reg_B, sizeof(reg_B));
+	file.read((char*)&reg_C, sizeof(reg_C));
+	file.read((char*)&reg_D, sizeof(reg_D));
+	file.read((char*)&reg_E, sizeof(reg_E));
+	file.read((char*)&reg_F, sizeof(reg_F));
+	file.read((char*)&reg_H, sizeof(reg_H));
+	file.read((char*)&reg_L, sizeof(reg_L));
+	file.read((char*)&reg_SP, sizeof(reg_SP));
+	file.read((char*)&reg_PC, sizeof(reg_PC));
 }
 
 void CPU::op(int pc, int cycle)

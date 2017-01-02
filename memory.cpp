@@ -75,8 +75,10 @@ void Memory::load_rom(std::string location)
 		if (character == 0)
 			break;
 		else
-			title.push_back(character);
+			title.push_back(tolower(character));
 	}
+
+	rom_name = title;
 
 	cout << "Title: " << title << endl;
 	Byte gb_type = buffer[0x0143];
@@ -188,18 +190,12 @@ void Memory::load_state(ifstream &file)
 
 void Memory::write_vector(ofstream &file, vector<Byte> &vec)
 {
-	for (int i = 0; i < vec.size(); i++)
-	{
-		file << vec[i];
-	}
+	file.write((char*)&vec[0], vec.size());
 }
 
 void Memory::load_vector(ifstream &file, vector<Byte> &vec)
 {
-	for (int i = 0; i < vec.size(); i++)
-	{
-		file >> vec[i];
-	}
+	file.read((char*)&vec[0], vec.size());
 }
 
 void Memory::do_dma_transfer()
