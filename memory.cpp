@@ -188,18 +188,12 @@ void Memory::load_state(ifstream &file)
 
 void Memory::write_vector(ofstream &file, vector<Byte> &vec)
 {
-	for (int i = 0; i < vec.size(); i++)
-	{
-		file << vec[i];
-	}
+	file.write((char*)&vec[0], vec.size());
 }
 
 void Memory::load_vector(ifstream &file, vector<Byte> &vec)
 {
-	for (int i = 0; i < vec.size(); i++)
-	{
-		file >> vec[i];
-	}
+	file.read((char*)&vec[0], vec.size());
 }
 
 void Memory::do_dma_transfer()
