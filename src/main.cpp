@@ -17,7 +17,7 @@ int main(int argc, char *args[])
 	//emulator.memory.load_rom("roms/Super Mario Land.gb");
 	//emulator.memory.load_rom("roms/cASTELIAN.gb");
 	//emulator.memory.load_rom("roms/Serpent.gb");
-	emulator.memory.load_rom("roms/pokemonred.gb");
+	emulator.memory.load_rom("roms/yupferris.gb");
 
 	emulator.run();
 

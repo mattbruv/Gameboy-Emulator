@@ -16,6 +16,13 @@ void MemoryController::set_ram(vector<Byte> data)
 	ERAM = data;
 }
 
+void MemoryController::save_state(ofstream &file) {
+	cout << "did nothing" << endl;
+}
+void MemoryController::load_state(ifstream &file) {
+	cout << "did nothing" << endl;
+}
+
 /*
 	MC0 represents games that use exactly 32kB of space
 	and don't have memory controllers
@@ -147,6 +154,27 @@ void MemoryController1::write(Address location, Byte data)
 	}
 }
 
+void MemoryController1::save_state(ofstream &file)
+{
+	file.write((char*)&ROM_bank_id, sizeof(ROM_bank_id));
+	file.write((char*)&RAM_bank_id, sizeof(RAM_bank_id));
+	file.write((char*)&RAM_bank_enabled, sizeof(RAM_bank_enabled));
+	file.write((char*)&RAM_access_enabled, sizeof(RAM_access_enabled));
+	file.write((char*)&mode, sizeof(mode));
+
+	cout << "wrote registers" << endl;
+}
+
+void MemoryController1::load_state(ifstream &file)
+{
+	file.read((char*)&ROM_bank_id, sizeof(ROM_bank_id));
+	file.read((char*)&RAM_bank_id, sizeof(RAM_bank_id));
+	file.read((char*)&RAM_bank_enabled, sizeof(RAM_bank_enabled));
+	file.read((char*)&RAM_access_enabled, sizeof(RAM_access_enabled));
+	file.read((char*)&mode, sizeof(mode));
+	cout << "read registers" << endl;
+}
+
 /*
 	Memory Controller 2
 */
@@ -247,4 +275,26 @@ void MemoryController3::write(Address location, Byte data)
 			// TODO: RTC writing
 		}
 	}
+}
+
+void MemoryController3::save_state(ofstream &file)
+{
+	file.write((char*)&ROM_bank_id, sizeof(ROM_bank_id));
+	file.write((char*)&RAM_bank_id, sizeof(RAM_bank_id));
+	file.write((char*)&RAM_bank_enabled, sizeof(RAM_bank_enabled));
+	file.write((char*)&RAM_access_enabled, sizeof(RAM_access_enabled));
+	file.write((char*)&mode, sizeof(mode));
+	file.write((char*)&RTC_enabled, sizeof(RTC_enabled));
+	cout << "wrote registers" << endl;
+}
+
+void MemoryController3::load_state(ifstream &file)
+{
+	file.read((char*)&ROM_bank_id, sizeof(ROM_bank_id));
+	file.read((char*)&RAM_bank_id, sizeof(RAM_bank_id));
+	file.read((char*)&RAM_bank_enabled, sizeof(RAM_bank_enabled));
+	file.read((char*)&RAM_access_enabled, sizeof(RAM_access_enabled));
+	file.read((char*)&mode, sizeof(mode));
+	file.read((char*)&RTC_enabled, sizeof(RTC_enabled));
+	cout << "read registers" << endl;
 }

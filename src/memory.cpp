@@ -172,6 +172,7 @@ void Memory::save_state(ofstream &file)
 	// save ERAM
 	vector<Byte> eram = controller->get_ram();
 	write_vector(file, eram);
+	controller->save_state(file);
 }
 
 void Memory::load_state(ifstream &file)
@@ -186,6 +187,7 @@ void Memory::load_state(ifstream &file)
 
 	load_vector(file, eram);
 	controller->set_ram(eram);
+	controller->load_state(file);
 }
 
 void Memory::write_vector(ofstream &file, vector<Byte> &vec)

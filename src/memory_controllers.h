@@ -9,7 +9,7 @@ class MemoryController
 		// $0000 - $7FFF, 32kB Cartridge (potentially dynamic)
 		vector<Byte> CART_ROM;
 		// $A000 - $BFFF, 8kB Cartridge external switchable RAM bank
-		vector<Byte> ERAM;		
+		vector<Byte> ERAM;
 
 		// Bank selectors
 		Byte ROM_bank_id = 1;
@@ -31,6 +31,8 @@ class MemoryController
 		// Save states
 		vector<Byte> get_ram();
 		void set_ram(vector<Byte> data);
+		virtual void save_state(ofstream &file);
+		virtual void load_state(ifstream &file);
 };
 
 // This class represents games that only use the exact 32kB of cartridge space
@@ -43,6 +45,8 @@ class MemoryController0 : public MemoryController {
 class MemoryController1 : public MemoryController {
 	Byte read(Address location);
 	void write(Address location, Byte data);
+	void save_state(ofstream &file);
+	void load_state(ifstream &file);
 };
 
 // MBC2 (max 256KByte ROM and 512x4 bits RAM)
@@ -58,4 +62,6 @@ class MemoryController3 : public MemoryController {
 
 	Byte read(Address locatison);
 	void write(Address location, Byte data);
+	void save_state(ofstream &file);
+	void load_state(ifstream &file);
 };

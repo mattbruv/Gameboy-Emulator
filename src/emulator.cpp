@@ -74,30 +74,21 @@ void Emulator::handle_events()
 
 void Emulator::key_pressed(Key key)
 {
-	if (key == Key::P)
-	{
-		display.debug_enabled = !display.debug_enabled;
-		cout << "debug enabled: " << display.debug_enabled << endl;
-	}
-
-	// super ghetto, will make much nicer later
+	// Function keys F1 thru F12
 	if (key >= 85 && key <= 96)
 	{
 		int id = key - 84;
 		if (sf::Keyboard::isKeyPressed(Key::LShift))
-		{
 			save_state(id);
-		}
 		else
-		{
 			load_state(id);
-		}
 		return;
 	}
 	
 	if (key == Key::Space)
 	{
 		cpu.CLOCK_SPEED *= 100;
+		return;
 	}
 
 	int key_id = get_key_id(key);
@@ -353,6 +344,15 @@ void Emulator::set_lcd_status()
 		else
 		{
 			mode = 0; // CPU has access to all display RAM
+
+			// If first time encountering H-blank, update the scanline
+			if (current_mode != mode)
+			{
+				// draw current scanline to screen
+				if (current_line < 144 && display.scanlines_rendered <= 144)
+					display.update_scanline(current_line);
+			}
+
 			// 0 binary
 			status = clear_bit(status, BIT_1);
 			status = clear_bit(status, BIT_0);
@@ -382,9 +382,9 @@ void Emulator::set_lcd_status()
 
 void Emulator::update_scanline(int cycles)
 {
-	set_lcd_status();
-
 	scanline_counter -= cycles;
+
+	set_lcd_status();
 
 	if (memory.LY.get() > 153)
 		memory.LY.clear();
@@ -393,10 +393,6 @@ void Emulator::update_scanline(int cycles)
 	if (scanline_counter <= 0)
 	{
 		Byte current_scanline = memory.LY.get();
-
-		// draw current scanline to screen
-		if (current_scanline < 144 && display.scanlines_rendered <= 144)
-			display.update_scanline(current_scanline);
 
 		// increment scanline and reset counter
 		memory.LY.set(++current_scanline);

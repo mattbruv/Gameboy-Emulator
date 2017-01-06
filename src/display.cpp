@@ -13,7 +13,7 @@ void Display::init(Memory* _memory)
 	bg_array.create(160, 144, sf::Color(255, 0, 255));
 	window_array.create(160, 144,  sf::Color(0, 0, 0, 0));
 	sprites_array.create(160, 144, sf::Color(0, 0, 0, 0)); // transparent
-
+	
 	shades_of_gray[0x0] = sf::Color(255, 255, 255); // 0x0 - White
 	shades_of_gray[0x1] = sf::Color(198, 198, 198); // 0x1 - Light Gray
 	shades_of_gray[0x2] = sf::Color(127, 127, 127); // 0x2 - Drak Gray
