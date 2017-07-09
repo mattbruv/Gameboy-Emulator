@@ -2,10 +2,16 @@
 
 Memory::Memory()
 {
+	// Initialize GB Memory
 	WRAM = vector<Byte>(0x2000); // $C000 - $DFFF, 8kB Working RAM
 	ZRAM = vector<Byte>(0x0100); // $FF00 - $FFFF, 256 bytes of RAM
 	VRAM = vector<Byte>(0x2000); // $8000 - $9FFF, 8kB Video RAM
 	OAM  = vector<Byte>(0x0100); // $FE00 - $FEFF, OAM Sprite RAM, IO RAM
+
+	// Initialize Color Gameboy Memory
+	CGB_WRAM = vector<Byte>(0x8000); // $D000 - $DFFF 32kB of 8kB RAM Banks
+	CGB_VRAM = vector<Byte>(0x2000); // 8kB of additional video RAM
+	color_palettes = vector<Byte>(0x40); // 64 bytes of color data
 
 	// Initialize Memory Register objects for easy reference
 	P1   = MemoryRegister(&ZRAM[0x00]);
@@ -27,6 +33,11 @@ Memory::Memory()
 	WX   = MemoryRegister(&ZRAM[0x4B]);
 	IF   = MemoryRegister(&ZRAM[0x0F]);
 	IE   = MemoryRegister(&ZRAM[0xFF]);
+	// Color Gameboy
+	SVBK = MemoryRegister(&ZRAM[0x70]);
+	VBK  = MemoryRegister(&ZRAM[0x4F]);
+	BGPI = MemoryRegister(&ZRAM[0x68]);
+	BGPD = MemoryRegister(&ZRAM[0x69]);
 
 	reset();
 }
@@ -82,7 +93,11 @@ void Memory::load_rom(std::string location)
 
 	cout << "Title: " << title << endl;
 	Byte gb_type = buffer[0x0143];
+
 	cout << "Gameboy Type: " << ((gb_type == 0x80) ? "GB Color" : "GB") << endl;
+	// Let the memory class know which mode the GB is in
+	color_mode = (gb_type == 0x80) ? true : false;
+
 	Byte functions = buffer[0x0146];
 	cout << "Use " << ((functions == 0x3) ? "Super " : "") << "Gameboy functions" << endl;
 
@@ -137,6 +152,7 @@ void Memory::load_rom(std::string location)
 		case 0x11:
 		case 0x12:
 		case 0x13:
+		case 0x1B: // PokeYellow MCB5 quick fix
 			controller = new MemoryController3();
 			break;
 		default:
@@ -169,6 +185,12 @@ void Memory::save_state(ofstream &file)
 	write_vector(file, WRAM);
 	write_vector(file, ZRAM);
 
+	if (color_mode)
+	{
+		write_vector(file, CGB_VRAM);
+		write_vector(file, CGB_WRAM);
+	}
+
 	// save ERAM
 	vector<Byte> eram = controller->get_ram();
 	write_vector(file, eram);
@@ -182,6 +204,12 @@ void Memory::load_state(ifstream &file)
 	load_vector(file, WRAM);
 	load_vector(file, ZRAM);
 
+	if (color_mode)
+	{
+		load_vector(file, CGB_VRAM);
+		load_vector(file, CGB_WRAM);
+	}
+
 	// Load ERAM
 	vector<Byte> eram(0x8000);
 
@@ -192,12 +220,12 @@ void Memory::load_state(ifstream &file)
 
 void Memory::write_vector(ofstream &file, vector<Byte> &vec)
 {
-	file.write((char*)&vec[0], vec.size());
+	file.write((char*) &vec[0], vec.size());
 }
 
 void Memory::load_vector(ifstream &file, vector<Byte> &vec)
 {
-	file.read((char*)&vec[0], vec.size());
+	file.read((char*) &vec[0], vec.size());
 }
 
 void Memory::do_dma_transfer()
@@ -227,6 +255,11 @@ Byte Memory::get_joypad_state()
 
 Byte Memory::read(Address location)
 {
+	// RAM shadow adjustment
+	if (location >= 0xE000 && location <= 0xFDFF)
+	{
+		location = location - 0x2000;
+	}
 	
 	switch (location & 0xF000)
 	{
@@ -244,6 +277,14 @@ Byte Memory::read(Address location)
 	// Graphics VRAM
 	case 0x8000:
 	case 0x9000:
+		// return correct memory bank if GBC mode
+		if (color_mode)
+		{
+			// If VBK is non zero, return 2nd memory bank
+			if (VBK.get() != 0)
+				return CGB_VRAM[location & 0x1FFF];
+		}
+
 		return VRAM[location & 0x1FFF];
 
 	// External RAM
@@ -254,20 +295,28 @@ Byte Memory::read(Address location)
 	// Working RAM (8kB) and RAM Shadow
 	case 0xC000:
 	case 0xD000:
-	case 0xE000:
+		// return correct memory bank if GBC mode
+		if (color_mode && (location >= 0xD000 && location <= 0xDFFF))
+		{
+			// if SVBK is non zero, return calculated bank
+			int bank = (SVBK.get() & 0x7);
+
+			// Value of 00h will select Bank 1
+			bank = (bank == 0) ? 1 : bank;
+
+			if (bank > 0)
+			{
+				int offset = location - 0xD000;
+				int lookup = (bank * 0x1000) + offset;
+				return CGB_WRAM[lookup];
+			}
+		}
 		return WRAM[location & 0x1FFF];
 
-	// Remaining Working RAM Shadow, I/O, Zero page RAM
+	// Remaining RAM: I/O, Zero page
 	case 0xF000:
 		switch (location & 0x0F00)
 		{
-			// Remaining Working RAM
-			case 0x000: case 0x100: case 0x200: case 0x300:
-			case 0x400: case 0x500: case 0x600: case 0x700:
-			case 0x800: case 0x900: case 0xA00: case 0xB00:
-			case 0xC00: case 0xD00:
-				return WRAM[location & 0x1FFF];
-
 			// Sprite OAM
 			case 0xE00:
 					return OAM[location & 0xFF];
@@ -275,16 +324,31 @@ Byte Memory::read(Address location)
 			case 0xF00:
 				if (location == 0xFF00)
 					return get_joypad_state();
+
+				// COLOR GAMEBOY REGISTERS
+				if (location == 0xFF69)
+				{
+					Byte index = BGPI.get();
+					return color_palettes[index];
+				}
+
 				else
 					return ZRAM[location & 0xFF];
 		}
 	default:
+		throw;
 		return 0xFF;
 	}
 }
 
 void Memory::write(Address location, Byte data)
 {
+	// RAM shadow adjustment
+	if (location >= 0xE000 && location <= 0xFDFF)
+	{
+		location = location - 0x2000;
+	}
+
 	switch (location & 0xF000)
 	{
 	// ROM
@@ -300,9 +364,16 @@ void Memory::write(Address location, Byte data)
 		break;
 
 	// Graphics VRAM
+	// Cannot write to VRAM during mode 3 
 	case 0x8000:
 	case 0x9000:
-		// Cannot write to VRAM during mode 3 
+		// write to correct memory bank if GBC mode
+		if (color_mode)
+		{
+			// If VBK is non zero, write to 2nd memory bank
+			if (VBK.get() != 0)
+				CGB_VRAM[location & 0x1FFF] = data;
+		}
 		VRAM[location & 0x1FFF] = data;
 		break;
 
@@ -315,22 +386,29 @@ void Memory::write(Address location, Byte data)
 	// Working RAM (8kB) and RAM Shadow
 	case 0xC000:
 	case 0xD000:
-	case 0xE000:
+		// write to correct memory bank if GBC mode
+		if (color_mode && (location >= 0xD000 && location <= 0xDFFF))
+		{
+			// if SVBK is non zero, return calculated bank
+			int bank = (SVBK.get() & 0x7);
+
+			// Value of 00h will select Bank 1
+			bank = (bank == 0) ? 1 : bank;
+
+			if (bank > 0)
+			{
+				int offset = location - 0xD000;
+				int lookup = (bank * 0x1000) + offset;
+				CGB_WRAM[lookup] = data;
+			}
+		}
 		WRAM[location & 0x1FFF] = data;
 		break;
 
-	// Remaining Working RAM Shadow, I/O, Zero page RAM
+	// Remaining RAM: I/O, Zero page
 	case 0xF000:
 		switch (location & 0x0F00)
 		{
-		// Remaining Working RAM
-		case 0x000: case 0x100: case 0x200: case 0x300:
-		case 0x400: case 0x500: case 0x600: case 0x700:
-		case 0x800: case 0x900: case 0xA00: case 0xB00:
-		case 0xC00: case 0xD00:
-			WRAM[location & 0x1FFF] = data;
-			break;
-
 		// Sprite OAM
 		case 0xE00:
 			OAM[location & 0xFF] = data;
@@ -340,6 +418,10 @@ void Memory::write(Address location, Byte data)
 			write_zero_page(location, data);
 			break;
 		}
+		break;
+	default:
+		throw;
+		return;
 	}
 }
 
@@ -369,6 +451,29 @@ void Memory::write_zero_page(Address location, Byte data)
 		ZRAM[0x46] = data;
 		do_dma_transfer();
 		break;
+
+	// COLOR GAMEBOY REGISTERS
+
+	// CGB VRAM Bank
+	case 0xFF4F:
+		ZRAM[0x4F] = data;
+		break;
+
+	// BG Palette address
+	case 0xFF68:
+		if (data & 0x80) // if bit 7 is set, increment data
+			data++;
+		ZRAM[0x68] = data;
+		break;
+
+	// BG Palette Data write
+	case 0xFF69:
+	{
+		Byte index = BGPI.get() & 0x3F; // extract bits 0-5 = address
+		color_palettes[index] = data; // write data to color palette memory
+		break;
+	}
+
 	default:
 		ZRAM[location & 0xFF] = data;
 		break;

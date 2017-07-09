@@ -19,6 +19,10 @@ class Emulator
 		Memory memory;
 		Display display;
 
+		// -------- SAVESTATES ------- //
+		void save_state(int id);
+		void load_state(int id);
+
 	private:
 
 		float framerate = 60;
@@ -30,10 +34,6 @@ class Emulator
 		void key_pressed(Key key);
 		void key_released(Key key);
 		int get_key_id(Key key);
-
-		// -------- SAVESTATES ------- //
-		void save_state(int id);
-		void load_state(int id);
 
 		// --------- DIVIDER --------- //
 		int divider_counter = 0;

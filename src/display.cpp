@@ -96,8 +96,6 @@ void Display::update_bg_scanline(Byte current_scanline)
 	Byte scroll_x = memory->SCX.get();
 	Byte scroll_y = memory->SCY.get();
 
-	//cout << hex << (int)scroll_x << " y: " << (int)scroll_y << endl;
-
 	Byte palette = memory->BGP.get();
 
 	// For each pixel in the 160x1 scanline:
@@ -180,9 +178,6 @@ void Display::update_window_scanline(Byte current_scanline)
 
 		// Invert x pixels because they are stored backwards
 		tile_x_pixel = abs(tile_x_pixel - 7);
-
-		if (current_scanline == 128)
-			bool breakpoint = true;
 
 		if (current_scanline < window_y)
 		{

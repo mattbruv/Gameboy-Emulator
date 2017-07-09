@@ -14,7 +14,13 @@ class Memory
 		vector<Byte> VRAM;		// $8000 - $9FFF, 8kB Video RAM
 		vector<Byte> OAM;		// $FE00 - $FEA0, OAM Sprite RAM
 		vector<Byte> WRAM;		// $C000 - $DFFF, 8kB Working RAM
-		vector<Byte> ZRAM;		// $FF80 - $FFFF, 128 bytes of RAM
+		vector<Byte> ZRAM;		// $FF00 - $FFFF, 256 bytes of RAM
+
+		// CGB Memory Banks
+		vector<Byte> CGB_VRAM; // 8kB Video Ram Bank 1 for CGB
+		vector<Byte> CGB_WRAM; // 32kB of additional Work RAM.. 8 banks of 4 KBytes each
+		// Bank 0 is always at $C000-CFFF
+		// Banks 1-7 are selected into address space $D000-DFFF
 
 		void do_dma_transfer();
 		Byte get_joypad_state();
@@ -27,6 +33,18 @@ class Memory
 			LCDC, STAT, SCY, SCX, LYC, LY, DMA,
 			BGP, OBP0, OBP1, WY, WX,
 			IF, IE;
+
+		// Gameboy Color Memory Variables
+		bool color_mode = false;
+		vector<Byte> color_palettes;
+
+		MemoryRegister
+			SVBK, // WRAM Bank
+			VBK,  // VRAM Bank
+			BGPI, // Background palette index
+			BGPD; // Background palette data
+
+
 
 		Byte video_mode;
 		Byte joypad_buttons;

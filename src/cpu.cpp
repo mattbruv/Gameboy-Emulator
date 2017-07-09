@@ -28,7 +28,7 @@ void CPU::reset()
 	* If all above checks pass, the internal ROM is disabled and the cartridge is
 	excecuted at 0x100 with the following register values.
 	*/
-	reg_A = 0x01;
+	reg_A = 0x11;
 	reg_B = 0x00;
 	reg_C = 0x13;
 	reg_D = 0x00;

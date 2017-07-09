@@ -91,6 +91,12 @@ void Emulator::key_pressed(Key key)
 		return;
 	}
 
+	if (key == Key::R)
+	{
+		cpu.reset();
+		memory.reset();
+	}
+
 	int key_id = get_key_id(key);
 
 	if (key_id < 0)
