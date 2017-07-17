@@ -40,7 +40,7 @@ const Byte
 const int
 	A      = 0,  // A
 	B      = 18, // S
-	START  = 25, // 
+	START  = 25, //
 	SELECT = 23,
 	LEFT  = 71,
 	RIGHT = 72,
@@ -84,8 +84,8 @@ class MemoryRegister
 		Byte *value;
 
 	public:
-		MemoryRegister::MemoryRegister();
-		MemoryRegister::MemoryRegister(Byte *_data);
+		MemoryRegister();
+		MemoryRegister(Byte *_data);
 		Byte get();
 		void set(Byte data);
 		void clear();

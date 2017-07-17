@@ -2,7 +2,7 @@
 
 #include <fstream>
 
-#include <SFML\System.hpp>
+#include <SFML/System.hpp>
 #include "cpu.h"
 #include "memory.h"
 #include "display.h"

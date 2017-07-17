@@ -1,6 +1,6 @@
 #pragma once
 
-#include <SFML\Graphics.hpp>
+#include <SFML/Graphics.hpp>
 #include <iostream>
 #include "memory.h"
 
@@ -8,7 +8,7 @@ class Display
 {
 	public:
 		sf::RenderWindow window;
-		
+
 		sf::Image bg_array;
 		sf::Image sprites_array;
 		sf::Image window_array;
@@ -56,7 +56,7 @@ class Display
 
 		void update_bg_tile_pixel(Byte palette, int display_x, int display_y, int tile_x, int tile_y, Byte tile_id);
 		void update_window_tile_pixel(Byte palette, int display_x, int display_y, int tile_x, int tile_y, Byte tile_id);
-		
+
 		sf::Color get_pixel_color(Byte palette, Byte top, Byte bottom, int bit, bool is_sprite);
 
 		void clear_window();

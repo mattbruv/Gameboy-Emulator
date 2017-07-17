@@ -139,7 +139,7 @@ void Memory::load_rom(std::string location)
 	Byte cart = buffer[0x0147];
 	cout << "Cartridge Type: " << cart_types[cart] << endl;
 
-	delete controller;
+	// delete controller;
 
 	// Assign memory controller based on cartridge specification
 	switch (cart)
@@ -257,7 +257,7 @@ void Memory::do_hdma_transfer()
 	// High, Low Destination - 1600
 	Byte h3 = HDMA3.get();
 	Byte h4 = HDMA4.get();
-	
+
 	Byte h5 = HDMA5.get();
 
 	Address source = (h1 << 8) | (h2 & 0xF0);
@@ -298,7 +298,7 @@ Byte Memory::read(Address location)
 	{
 		location = location - 0x2000;
 	}
-	
+
 	switch (location & 0xF000)
 	{
 	// ROM
@@ -410,7 +410,7 @@ void Memory::write(Address location, Byte data)
 		break;
 
 	// Graphics VRAM
-	// Cannot write to VRAM during mode 3 
+	// Cannot write to VRAM during mode 3
 	case 0x8000:
 	case 0x9000:
 		// write to correct memory bank if GBC mode
@@ -488,7 +488,7 @@ void Memory::write_zero_page(Address location, Byte data)
 		ZRAM[0x41] = (data & 0xFC) | (STAT.get() & 0x03);
 		break;
 
-	// LY Register - Game cannot write to this register directly 
+	// LY Register - Game cannot write to this register directly
 	case 0xFF44:
 		ZRAM[0x44] = 0;
 		break;

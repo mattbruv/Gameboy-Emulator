@@ -60,7 +60,7 @@ class Memory
 
 		string rom_name;
 
-		Memory::Memory();
+		Memory();
 		void reset();
 		void load_rom(std::string location);
 
