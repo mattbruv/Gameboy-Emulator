@@ -33,11 +33,18 @@ Memory::Memory()
 	WX   = MemoryRegister(&ZRAM[0x4B]);
 	IF   = MemoryRegister(&ZRAM[0x0F]);
 	IE   = MemoryRegister(&ZRAM[0xFF]);
+
 	// Color Gameboy
 	SVBK = MemoryRegister(&ZRAM[0x70]);
 	VBK  = MemoryRegister(&ZRAM[0x4F]);
 	BGPI = MemoryRegister(&ZRAM[0x68]);
 	BGPD = MemoryRegister(&ZRAM[0x69]);
+
+	HDMA1 = MemoryRegister(&ZRAM[0x51]);
+	HDMA2 = MemoryRegister(&ZRAM[0x52]);
+	HDMA3 = MemoryRegister(&ZRAM[0x53]);
+	HDMA4 = MemoryRegister(&ZRAM[0x54]);
+	HDMA5 = MemoryRegister(&ZRAM[0x55]);
 
 	reset();
 }
@@ -238,6 +245,37 @@ void Memory::do_dma_transfer()
 	}
 }
 
+void Memory::do_hdma_transfer()
+{
+	//if (!color_mode)
+	//	return;
+
+	// High, Low Source - D000
+	Byte h1 = HDMA1.get();
+	Byte h2 = HDMA2.get();
+
+	// High, Low Destination - 1600
+	Byte h3 = HDMA3.get();
+	Byte h4 = HDMA4.get();
+	
+	Byte h5 = HDMA5.get();
+
+	Address source = (h1 << 8) | (h2 & 0xF0);
+	Address destination = ((h3 & 0x1F) << 8) | (h4 & 0xF0);
+	source &= 0xFFF0;
+	destination |= 0x8000; // Destination is always in VRAM
+
+	int length = 0x10 + ((h5 & 0x7F) * 0x10);
+
+	for (int i = 0; i < length; i++)
+	{
+		write((destination + i), read(source + i));
+	}
+
+	// All done!
+	HDMA5.set_bit(BIT_7);
+}
+
 Byte Memory::get_joypad_state()
 {
 	Byte request = P1.get();
@@ -343,6 +381,14 @@ Byte Memory::read(Address location)
 
 void Memory::write(Address location, Byte data)
 {
+	if (//location == 0xFF51 ||
+		//location == 0xFF52 ||
+		//location == 0xFF53 ||
+		//location == 0xFF54 ||
+		location == 0xFF55)
+	{
+		bool breakpoint = true;
+	}
 	// RAM shadow adjustment
 	if (location >= 0xE000 && location <= 0xFDFF)
 	{
@@ -421,7 +467,7 @@ void Memory::write(Address location, Byte data)
 		break;
 	default:
 		throw;
-		return;
+		break;
 	}
 }
 
@@ -457,6 +503,12 @@ void Memory::write_zero_page(Address location, Byte data)
 	// CGB VRAM Bank
 	case 0xFF4F:
 		ZRAM[0x4F] = data;
+		break;
+
+	// HDMA Start
+	case 0xFF55:
+		ZRAM[0x55] = data;
+		do_hdma_transfer();
 		break;
 
 	// BG Palette address

@@ -23,6 +23,7 @@ class Memory
 		// Banks 1-7 are selected into address space $D000-DFFF
 
 		void do_dma_transfer();
+		void do_hdma_transfer();
 		Byte get_joypad_state();
 
 	public:
@@ -42,7 +43,14 @@ class Memory
 			SVBK, // WRAM Bank
 			VBK,  // VRAM Bank
 			BGPI, // Background palette index
-			BGPD; // Background palette data
+			BGPD, // Background palette data
+
+			// HDMA Registers
+			HDMA1, // DMA Source, High
+			HDMA2, // DMA Source, Low
+			HDMA3, // DMA Destination, High
+			HDMA4, // DMA Destination, Low
+			HDMA5; // DMA Length/Mode/Start
 
 
 
