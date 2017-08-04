@@ -5,15 +5,15 @@ void Display::init(Memory* _memory)
 	memory = _memory;
 
 	int scale = 5;
-	
+
 	window.create(sf::VideoMode(width, height), "Gameboy Emulator");
-	window.setSize(sf::Vector2u(width * scale, height * scale));
+	resize_window(5);
 	window.setKeyRepeatEnabled(false);
 
 	bg_array.create(160, 144, sf::Color(255, 0, 255));
 	window_array.create(160, 144,  sf::Color(0, 0, 0, 0));
 	sprites_array.create(160, 144, sf::Color(0, 0, 0, 0)); // transparent
-	
+
 	shades_of_gray[0x0] = sf::Color(255, 255, 255); // 0x0 - White
 	shades_of_gray[0x1] = sf::Color(198, 198, 198); // 0x1 - Light Gray
 	shades_of_gray[0x2] = sf::Color(127, 127, 127); // 0x2 - Drak Gray
@@ -22,12 +22,17 @@ void Display::init(Memory* _memory)
 	shades_of_gray[0x0] = sf::Color(224, 248, 208); // 0x0 - White
 	shades_of_gray[0x1] = sf::Color(136, 192, 112); // 0x1 - Light Gray
 	shades_of_gray[0x2] = sf::Color(48, 104, 80); // 0x2 - Drak Gray
-	shades_of_gray[0x3] = sf::Color(8, 24, 32);       // 0x3 - Black 
+	shades_of_gray[0x3] = sf::Color(8, 24, 32);       // 0x3 - Black
 	/*
 	shades_of_gray[0x0] = sf::Color(155, 187, 14); // 0x0 - White
 	shades_of_gray[0x1] = sf::Color(115, 160, 103); // 0x1 - Light Gray
 	shades_of_gray[0x2] = sf::Color(53, 98, 55); // 0x2 - Drak Gray
 	shades_of_gray[0x3] = sf::Color(15, 56, 14);       // 0x3 - Black*/
+}
+
+void Display::resize_window(int scale)
+{
+	window.setSize(sf::Vector2u(width * scale, height * scale));
 }
 
 void Display::render()
@@ -56,7 +61,7 @@ void Display::render()
 	window_sprite.setTexture(window_texture);
 	bg_sprite.setTexture(bg_texture);
 	sprites_sprite.setTexture(sprites_texture);
-	
+
 	window.draw(bg_sprite);
 	window.draw(window_sprite);
 	window.draw(sprites_sprite);
@@ -147,7 +152,7 @@ void Display::update_window_scanline(Byte current_scanline)
 	int window_y = (int) memory->WY.get();
 
 	Byte palette = memory->BGP.get();
-	
+
 	// For each pixel in the 160x1 scanline:
 	// 1. Calculate where the pixel resides in the overall 256x256 background map
 	// 2. Get the tile ID where that pixel is located
@@ -206,7 +211,7 @@ void Display::update_bg_tile_pixel(Byte palette, int display_x, int display_y, i
 	Address bg_data_location = (bg_char_selection) ? 0x8000 : 0x9000;
 	Address offset;
 
-	// 0x8000 - 0x8FFF unsigned 
+	// 0x8000 - 0x8FFF unsigned
 	if (bg_char_selection)
 	{
 		offset = (tile_id * 16) + bg_data_location;
@@ -247,7 +252,7 @@ void Display::update_window_tile_pixel(Byte palette, int display_x, int display_
 	Address bg_data_location = (bg_char_selection) ? 0x8000 : 0x9000;
 	Address offset;
 
-	// 0x8000 - 0x8FFF unsigned 
+	// 0x8000 - 0x8FFF unsigned
 	if (bg_char_selection)
 	{
 		offset = (tile_id * 16) + bg_data_location;
@@ -346,7 +351,7 @@ void Display::render_sprite_tile(Byte palette, int start_x, int start_y, Byte ti
 
 			// If color in bg/window is anything but white, hide the sprite pixel
 			sf::Color bg_color = bg_array.getPixel(pixel_x, pixel_y);
-			
+
 			if (priority)
 			{
 				if (bg_color != shades_of_gray[0x0])

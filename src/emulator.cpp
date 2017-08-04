@@ -31,7 +31,7 @@ void Emulator::run()
 			update_timers(cpu.num_cycles);
 			update_scanline(cpu.num_cycles);
 			do_interrupts();
-			
+
 			cpu.num_cycles = 0;
 		}
 
@@ -84,7 +84,14 @@ void Emulator::key_pressed(Key key)
 			load_state(id);
 		return;
 	}
-	
+
+	// Display size numpad 1 -> 9
+	if (key >= 76 && key <= 84)
+	{
+		int scale = key - 75;
+		display.resize_window(scale);
+	}
+
 	if (key == Key::Space)
 	{
 		cpu.CLOCK_SPEED *= 100;
@@ -111,7 +118,7 @@ void Emulator::key_pressed(Key key)
 
 	Byte joypad = (directional) ? memory.joypad_arrows : memory.joypad_buttons;
 	bool unpressed = is_bit_set(joypad, key_id);
-	
+
 	if (!unpressed)
 		return;
 
@@ -276,7 +283,7 @@ void Emulator::do_interrupts()
 				if (memory.IE.is_bit_set(i))
 				{
 					// IME only disables the servicing of interrupts,
-					// not all interrupt functionality 
+					// not all interrupt functionality
 					if (cpu.interrupt_master_enable)
 					{
 						service_interrupt(i);

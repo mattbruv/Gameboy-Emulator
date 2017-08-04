@@ -36,6 +36,7 @@ class Display
 
 		// Output all scanlines as a single frame
 		void render();
+		void resize_window(int scale);
 
 		bool is_lcd_enabled();
 
