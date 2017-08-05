@@ -363,6 +363,20 @@ Byte Memory::read(Address location)
 				if (location == 0xFF00)
 					return get_joypad_state();
 
+				// STAT register fix
+				// If LCD is off, set STAT mode and LY to 0 matt
+				// if (location == 0xFF41 || location == 0xFF44)
+				// {
+				// 	// If the LCD is off
+				// 	if (LCDC.is_bit_set(BIT_7) == false)
+				// 	{
+				// 		if (location == 0xFF41)
+				// 			return (STAT.get() & 0xFC);
+				// 		else
+				// 			return 0;
+				// 	}
+				// }
+
 				// COLOR GAMEBOY REGISTERS
 				if (location == 0xFF69)
 				{

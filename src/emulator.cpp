@@ -325,9 +325,16 @@ void Emulator::service_interrupt(Byte id)
 
 void Emulator::set_lcd_status()
 {
-	Byte status = memory.STAT.get();
+	// https://www.reddit.com/r/EmuDev/comments/6r6gf3/gb_pokemon_gold_spews_unexpected_values_at_mbc/
+	if (display.is_lcd_enabled() == false)
+	{
+		memory.STAT.set((memory.STAT.get() & 0xFC));
+		memory.LY.clear();
+	}
 
+	Byte status = memory.STAT.get();
 	Byte current_line = memory.LY.get();
+
 	// extract current LCD mode
 	Byte current_mode = status & 0x03;
 
@@ -366,7 +373,8 @@ void Emulator::set_lcd_status()
 		}
 		else
 		{
-			mode = 0; // CPU has access to all display RAM
+			mode = 0; // During H-Blank
+			// CPU has access to all display RAM
 
 			// If first time encountering H-blank, update the scanline
 			if (current_mode != mode)

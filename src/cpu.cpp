@@ -352,7 +352,7 @@ void CPU::ADDHL(Pair reg_pair)
 	Byte_2 result = target + value;
 
 	ADD16(target, value); // set appropriate flags
-	
+
 	Pair(reg_H, reg_L).set(result);
 }
 
