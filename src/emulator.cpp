@@ -70,6 +70,9 @@ void Emulator::handle_events()
 				break;
 		}
 	}
+
+	// handle vram and debugging windows
+	display.handle_events();
 }
 
 void Emulator::key_pressed(Key key)
@@ -85,11 +88,18 @@ void Emulator::key_pressed(Key key)
 		return;
 	}
 
+	if (key == 68)
+	{
+		display.show_vram();
+		return;
+	}
+
 	// Display size numpad 1 -> 9
 	if (key >= 76 && key <= 84)
 	{
 		int scale = key - 75;
 		display.resize_window(scale);
+		return;
 	}
 
 	if (key == Key::Space)

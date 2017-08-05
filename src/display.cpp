@@ -4,8 +4,6 @@ void Display::init(Memory* _memory)
 {
 	memory = _memory;
 
-	int scale = 5;
-
 	window.create(sf::VideoMode(width, height), "Gameboy Emulator");
 	resize_window(5);
 	window.setKeyRepeatEnabled(false);
@@ -33,6 +31,82 @@ void Display::init(Memory* _memory)
 void Display::resize_window(int scale)
 {
 	window.setSize(sf::Vector2u(width * scale, height * scale));
+}
+
+// Enable/Disable debugging windows
+void Display::show_vram()
+{
+	if (!bgmap.isOpen())
+	{
+		int scale = 2;
+		bgmap.create(sf::VideoMode(256 * scale, 256 * scale), "VRAM Viewer - Background Map");
+		bgmap.clear(sf::Color::Blue);
+		bgmap.display();
+	}
+	else
+		bgmap.close();
+
+	if (!tiles.isOpen())
+	{
+		int scale = 2;
+		// 160px by 160px is 20x20 or 400 tiles. max potential tiles are 384
+		tiles.create(sf::VideoMode(160 * scale, 160 * scale), "VRAM Viewer - Tiles");
+		tiles.clear(sf::Color::Green);
+		tiles.display();
+	}
+	else
+		tiles.close();
+}
+
+// Render debugging windows
+void Display::render_vram()
+{
+	if (bgmap.isOpen())
+	{
+		bgmap.clear(sf::Color::Blue);
+		bgmap.display();
+	}
+
+	if (tiles.isOpen())
+	{
+		tiles.clear(sf::Color::Green);
+		tiles.display();
+	}
+}
+
+void Display::handle_events()
+{
+	// Handle debugging windows
+	if (bgmap.isOpen())
+	{
+		sf::Event event;
+
+		while (bgmap.pollEvent(event))
+		{
+			switch (event.type)
+			{
+				case sf::Event::Closed:
+					bgmap.close();
+					break;
+			}
+		}
+	}
+
+	if (tiles.isOpen())
+	{
+		sf::Event event;
+
+		while (tiles.pollEvent(event))
+		{
+			switch (event.type)
+			{
+				case sf::Event::Closed:
+					tiles.close();
+					break;
+			}
+		}
+	}
+
 }
 
 void Display::render()
@@ -66,7 +140,11 @@ void Display::render()
 	window.draw(window_sprite);
 	window.draw(sprites_sprite);
 
+	// Re-draw main display
 	window.display();
+
+	// Re-draw our debugging windows
+	render_vram();
 }
 
 void Display::clear_window()

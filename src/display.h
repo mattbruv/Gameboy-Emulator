@@ -9,6 +9,13 @@ class Display
 	public:
 		sf::RenderWindow window;
 
+		// Debugging windows
+		sf::RenderWindow bgmap;
+		sf::RenderWindow tiles;
+
+		// Reworking display
+		vector<sf::Image> tile_RAM_1;
+
 		sf::Image bg_array;
 		sf::Image sprites_array;
 		sf::Image window_array;
@@ -18,7 +25,7 @@ class Display
 		sf::Sprite window_sprite;
 
 		int width = 160,
-			height = 144;
+			  height = 144;
 
 		bool emulate_pallete = true;
 
@@ -36,6 +43,10 @@ class Display
 
 		// Output all scanlines as a single frame
 		void render();
+
+		void show_vram();
+		void handle_events();
+
 		void resize_window(int scale);
 
 		bool is_lcd_enabled();
@@ -63,4 +74,6 @@ class Display
 		void clear_window();
 		void render_sprites();
 		void render_sprite_tile(Byte pallete, int start_x, int start_y, Byte tile_id, Byte flags);
+
+		void render_vram();
 };
