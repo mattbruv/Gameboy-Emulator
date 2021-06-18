@@ -28,7 +28,16 @@ void CPU::reset()
 	* If all above checks pass, the internal ROM is disabled and the cartridge is
 	excecuted at 0x100 with the following register values.
 	*/
-    reg_A = 0x01;
+
+    /*
+    CGB hardware can be detected by examing the CPU accumulator (A-register) directly after startup.
+    A value of 11h indicates CGB (or GBA) hardware, if so,
+    CGB functions can be used.
+    When A=11h, you may also examine Bit 0 of the CPUs B-Register to separate
+    between CGB (bit cleared) and GBA (bit set), by that detection it is possible to use
+    "repaired" color palette data matching for GBA displays.
+    */
+    reg_A = 0x11;
     reg_B = 0x00;
     reg_C = 0x13;
     reg_D = 0x00;
