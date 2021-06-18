@@ -5,22 +5,13 @@
 
 int main(int argc, char* args[])
 {
-    Emulator emulator;
+    if (argc > 1)
+    {
+        Emulator* emulator = new Emulator();
 
-    //string name = "cpu/cpu_instrs";
-    //string name = "instr_timing";
-
-    //emulator.memory.load_rom("tests/" + name + ".gb");
-    //emulator.memory.load_rom("roms/Dr. Mario.gb");
-    //emulator.memory.load_rom("roms/kirby.gb");
-    //emulator.memory.load_rom("roms/tetris.gb");
-    //emulator.memory.load_rom("roms/minesweeper.gb");
-    //emulator.memory.load_rom("roms/Super Mario Land.gb");
-    //emulator.memory.load_rom("roms/cASTELIAN.gb");
-    //emulator.memory.load_rom("roms/Serpent.gb");
-    emulator.memory.load_rom("roms/yupferris.gb");
-
-    emulator.run();
+        emulator->memory.load_rom(args[1]);
+        emulator->run();
+    }
 
     return 0;
 }

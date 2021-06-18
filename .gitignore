@@ -1,3 +1,6 @@
 *.exe
 *.dll
+*.gb
 obj
+roms
+saves

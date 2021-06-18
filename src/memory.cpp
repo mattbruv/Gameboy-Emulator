@@ -117,7 +117,8 @@ void Memory::load_rom(std::string location)
     Byte cart = buffer[0x0147];
     cout << "Cartridge Type: " << cart_types[cart] << endl;
 
-    delete controller;
+    if (controller)
+        delete controller;
 
     // Assign memory controller based on cartridge specification
     switch (cart)

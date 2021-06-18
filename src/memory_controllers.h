@@ -24,6 +24,9 @@ protected:
     const Byte MODE_RAM = 1;
 
 public:
+    virtual ~MemoryController()
+    {
+    }
     void init(vector<Byte> cartridge_buffer);
     virtual Byte read(Address location) = 0;
     virtual void write(Address location, Byte data) = 0;
@@ -45,6 +48,9 @@ class MemoryController0 : public MemoryController
 // MBC1 (max 2MByte ROM and/or 32KByte RAM)
 class MemoryController1 : public MemoryController
 {
+    ~MemoryController1()
+    {
+    }
     Byte read(Address location);
     void write(Address location, Byte data);
     void save_state(ofstream& file);
@@ -54,6 +60,9 @@ class MemoryController1 : public MemoryController
 // MBC2 (max 256KByte ROM and 512x4 bits RAM)
 class MemoryController2 : public MemoryController
 {
+    ~MemoryController2()
+    {
+    }
     Byte read(Address location);
     void write(Address location, Byte data);
 };
@@ -61,6 +70,9 @@ class MemoryController2 : public MemoryController
 // MBC3(max 2MByte ROM and / or 32KByte RAM and Timer)
 class MemoryController3 : public MemoryController
 {
+    ~MemoryController3()
+    {
+    }
     bool RTC_enabled = false;
 
     Byte read(Address locatison);
