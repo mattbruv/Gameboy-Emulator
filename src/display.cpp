@@ -182,8 +182,8 @@ void Display::update_window_scanline(Byte current_scanline)
         // Invert x pixels because they are stored backwards
         tile_x_pixel = abs(tile_x_pixel - 7);
 
-        if (current_scanline == 128)
-            bool breakpoint = true;
+        // if (current_scanline == 128)
+        //    bool breakpoint = true;
 
         if (current_scanline < window_y)
         {
@@ -324,7 +324,7 @@ void Display::render_sprite_tile(Byte palette, int start_x, int start_y, Byte ti
     // If set to zero then sprite always rendered above bg
     // If set to 1, sprite is hidden behind the background and window
     // unless the color of the background or window is white, it's then rendered on top
-    bool hide_sprite = is_bit_set(flags, BIT_7);
+    // bool hide_sprite = is_bit_set(flags, BIT_7);
 
     for (int y = 0; y < 8; y++)
     {
@@ -334,8 +334,8 @@ void Display::render_sprite_tile(Byte palette, int start_x, int start_y, Byte ti
 
         for (int x = 0; x < 8; x++)
         {
-            int pixel_x = (mirror_x) ? (start_x + x) : (start_x + 7 - x);
-            int pixel_y = (mirror_y) ? (start_y + 7 - y) : (start_y + y);
+            unsigned int pixel_x = (mirror_x) ? (start_x + x) : (start_x + 7 - x);
+            unsigned int pixel_y = (mirror_y) ? (start_y + 7 - y) : (start_y + y);
 
             // prevent pixels from being drawn off screen
             sf::Vector2u bounds = sprites_array.getSize();

@@ -222,6 +222,7 @@ Byte MemoryController3::read(Address location)
 
         return ERAM[lookup];
     }
+    return 0xFF;
 }
 
 void MemoryController3::write(Address location, Byte data)

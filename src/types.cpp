@@ -20,7 +20,7 @@ Byte high_nibble(Byte target)
 
 Byte low_nibble(Byte target)
 {
-    Byte test = (target & 0xF);
+    // Byte test = (target & 0xF);
     return (target & 0xF);
 }
 

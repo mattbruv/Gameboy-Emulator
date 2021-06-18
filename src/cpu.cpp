@@ -759,8 +759,8 @@ void CPU::RST(Address addr)
 // will come back and try to understand this fully
 void CPU::DAA()
 {
-    Byte high = high_nibble(reg_A);
-    Byte low = low_nibble(reg_A);
+    // Byte high = high_nibble(reg_A);
+    // Byte low = low_nibble(reg_A);
 
     bool add = ((reg_F & FLAG_SUB) == 0);
     bool carry = ((reg_F & FLAG_CARRY) != 0);
@@ -769,10 +769,10 @@ void CPU::DAA()
     Byte_2 result = (Byte_2)reg_A;
     Byte_2 correction = (carry) ? 0x60 : 0x00;
 
-    if (half_carry || (add) && ((result & 0x0F) > 9))
+    if (half_carry || (add && ((result & 0x0F) > 9)))
         correction |= 0x06;
 
-    if (carry || (add) && (result > 0x99))
+    if (carry || (add && (result > 0x99)))
         correction |= 0x60;
 
     if (add)
