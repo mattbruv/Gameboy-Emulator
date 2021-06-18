@@ -560,3 +560,4 @@ void CPU::parse_opcode(Opcode code)
 		default: op(1, 0); break;
 	}
 }
+   

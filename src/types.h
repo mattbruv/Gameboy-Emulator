@@ -18,34 +18,17 @@ typedef uint8_t Byte, Opcode;
 typedef int8_t Byte_Signed;
 typedef int16_t Byte_2_Signed;
 
-const Byte
-	BIT_7 = 7,
-	BIT_6 = 6,
-	BIT_5 = 5,
-	BIT_4 = 4,
-	BIT_3 = 3,
-	BIT_2 = 2,
-	BIT_1 = 1,
-	BIT_0 = 0;
+const Byte BIT_7 = 7, BIT_6 = 6, BIT_5 = 5, BIT_4 = 4, BIT_3 = 3, BIT_2 = 2, BIT_1 = 1, BIT_0 = 0;
 
 // Interrupt register bit values
-const Byte
-	INTERRUPT_VBLANK = 0,
-	INTERRUPT_LCDC = 1,
-	INTERRUPT_TIMER = 2,
-	INTERRUPT_SERIAL = 3,
-	INTERRUPT_JOYPAD = 4;
+const Byte INTERRUPT_VBLANK = 0, INTERRUPT_LCDC = 1, INTERRUPT_TIMER = 2, INTERRUPT_SERIAL = 3,
+           INTERRUPT_JOYPAD = 4;
 
 // Joypad keyboard key IDs
-const int
-	A      = 0,  // A
-	B      = 18, // S
-	START  = 25, // 
-	SELECT = 23,
-	LEFT  = 71,
-	RIGHT = 72,
-	UP    = 73,
-	DOWN  = 74;
+const int A = 0, // A
+    B = 18, // S
+    START = 25, //
+    SELECT = 23, LEFT = 71, RIGHT = 72, UP = 73, DOWN = 74;
 
 // Helper functions
 Byte high_byte(Byte_2 target);
@@ -61,35 +44,36 @@ bool is_bit_set(Byte data, Byte bit);
 // Register pair helper class
 class Pair
 {
-	private:
-		Byte& high;
-		Byte& low;
+private:
+    Byte& high;
+    Byte& low;
 
-	public:
-		Pair(Byte& high_, Byte& low_)
-			: high(high_), low(low_) {}
-		void inc();
-		void dec();
-		void set(Byte_2 value);
-		void set(Byte upper, Byte lower);
-		Byte_2 get();
+public:
+    Pair(Byte& high_, Byte& low_) : high(high_), low(low_)
+    {
+    }
+    void inc();
+    void dec();
+    void set(Byte_2 value);
+    void set(Byte upper, Byte lower);
+    Byte_2 get();
 
-		Address address();
+    Address address();
 };
 
 // Memory register helper class
 class MemoryRegister
 {
-	private:
-		Byte *value;
+private:
+    Byte* value;
 
-	public:
-		MemoryRegister::MemoryRegister();
-		MemoryRegister::MemoryRegister(Byte *_data);
-		Byte get();
-		void set(Byte data);
-		void clear();
-		void set_bit(Byte bit);
-		void clear_bit(Byte bit);
-		bool is_bit_set(Byte bit);
+public:
+    MemoryRegister();
+    MemoryRegister(Byte* _data);
+    Byte get();
+    void set(Byte data);
+    void clear();
+    void set_bit(Byte bit);
+    void clear_bit(Byte bit);
+    bool is_bit_set(Byte bit);
 };

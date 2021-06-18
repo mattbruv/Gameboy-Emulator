@@ -5,46 +5,40 @@
 
 class Memory
 {
-	private:
+private:
+    // Dynamic Memory Controller
+    MemoryController* controller;
 
-		// Dynamic Memory Controller
-		MemoryController* controller;
+    // Memory Regions
+    vector<Byte> VRAM; // $8000 - $9FFF, 8kB Video RAM
+    vector<Byte> OAM; // $FE00 - $FEA0, OAM Sprite RAM
+    vector<Byte> WRAM; // $C000 - $DFFF, 8kB Working RAM
+    vector<Byte> ZRAM; // $FF80 - $FFFF, 128 bytes of RAM
 
-		// Memory Regions
-		vector<Byte> VRAM;		// $8000 - $9FFF, 8kB Video RAM
-		vector<Byte> OAM;		// $FE00 - $FEA0, OAM Sprite RAM
-		vector<Byte> WRAM;		// $C000 - $DFFF, 8kB Working RAM
-		vector<Byte> ZRAM;		// $FF80 - $FFFF, 128 bytes of RAM
+    void do_dma_transfer();
+    Byte get_joypad_state();
 
-		void do_dma_transfer();
-		Byte get_joypad_state();
+public:
+    MemoryRegister P1, DIV, TIMA, TMA, TAC, LCDC, STAT, SCY, SCX, LYC, LY, DMA, BGP, OBP0, OBP1, WY,
+        WX, IF, IE;
 
-	public:
+    Byte video_mode;
+    Byte joypad_buttons;
+    Byte joypad_arrows;
 
-		MemoryRegister
-			P1,
-			DIV, TIMA, TMA, TAC,
-			LCDC, STAT, SCY, SCX, LYC, LY, DMA,
-			BGP, OBP0, OBP1, WY, WX,
-			IF, IE;
+    string rom_name;
 
-		Byte video_mode;
-		Byte joypad_buttons;
-		Byte joypad_arrows;
+    Memory();
+    void reset();
+    void load_rom(std::string location);
 
-		string rom_name;
+    Byte read(Address location);
 
-		Memory::Memory();
-		void reset();
-		void load_rom(std::string location);
+    void write_vector(ofstream& file, vector<Byte>& vec);
+    void load_vector(ifstream& file, vector<Byte>& vec);
+    void save_state(ofstream& file);
+    void load_state(ifstream& file);
 
-		Byte read(Address location);
-
-		void write_vector(ofstream &file, vector<Byte> &vec);
-		void load_vector(ifstream &file, vector<Byte> &vec);
-		void save_state(ofstream &file);
-		void load_state(ifstream &file);
-
-		void write(Address location, Byte data);
-		void write_zero_page(Address location, Byte data);
+    void write(Address location, Byte data);
+    void write_zero_page(Address location, Byte data);
 };
