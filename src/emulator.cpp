@@ -47,6 +47,12 @@ void Emulator::run()
 		time = time.Zero;
 		//cout << display.scanlines_rendered << endl;
 		display.scanlines_rendered = 0;
+
+		//debugger
+		if (debugWindow.window.isOpen())
+		{
+			debugWindow.update(cpu);
+		}
 	}
 }
 

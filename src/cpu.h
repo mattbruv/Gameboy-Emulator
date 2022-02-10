@@ -31,10 +31,11 @@ class CPU
 		void parse_opcode(Opcode code);
 		void debug();
 
-	private:
+	
 
 		Memory* memory;
 
+	private:
 		const int
 			FLAG_ZERO       = 0b10000000,
 			FLAG_SUB        = 0b01000000,

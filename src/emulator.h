@@ -6,6 +6,7 @@
 #include "cpu.h"
 #include "memory.h"
 #include "display.h"
+#include "debugger.h"
 
 typedef sf::Keyboard::Key Key;
 
@@ -18,6 +19,8 @@ class Emulator
 		CPU cpu;
 		Memory memory;
 		Display display;
+
+		debugger debugWindow;
 
 	private:
 
