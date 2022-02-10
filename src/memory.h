@@ -10,16 +10,16 @@ class Memory
 		// Dynamic Memory Controller
 		MemoryController* controller;
 
+		void do_dma_transfer();
+		Byte get_joypad_state();
+
+	public:
+
 		// Memory Regions
 		vector<Byte> VRAM;		// $8000 - $9FFF, 8kB Video RAM
 		vector<Byte> OAM;		// $FE00 - $FEA0, OAM Sprite RAM
 		vector<Byte> WRAM;		// $C000 - $DFFF, 8kB Working RAM
 		vector<Byte> ZRAM;		// $FF80 - $FFFF, 128 bytes of RAM
-
-		void do_dma_transfer();
-		Byte get_joypad_state();
-
-	public:
 
 		MemoryRegister
 			P1,
